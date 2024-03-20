@@ -1,32 +1,19 @@
 var express = require("express");
 var router = express.Router();
 var database = require("../db/conn");
+const { ObjectId } = require('mongodb');
 
-router.get("/", function (req, res, next) {
-  database.connectToServer(function (err) {
-    if (err) {
-      console.error("Error connecting to the database:", err);
-      res.status(500).send("Internal server error");
-      return;
-    }
 
-    database
-      .getDb()
-      .collection("notes")
-      .find({})
-      .toArray(function (err, notas) {
-        if (err) {
-          console.error("Error consulting the database:", err);
-          res.status(500).send("Internal server error");
-          return;
-        }
-
-        res.json(notas);
-      });
-  });
+router.get("/", async function (req, res, next) {
+  console.log("GET /notes")
+  const db = await database.connectToServer();
+  const notes = db.collection("Notes").find({});
+  const arrayNotes = await notes.toArray();
+  console.log(arrayNotes)
+  res.json(arrayNotes);
 });
 
-router.post("/create", function (req, res, next) {
+router.post("/create", async function (req, res, next) {
   var newNote = req.body;
 
   if (!newNote || !newNote.title || !newNote.content) {
@@ -36,39 +23,28 @@ router.post("/create", function (req, res, next) {
     return;
   }
 
-  database.connectToServer(function (err) {
-    if (err) {
-      console.error("Error connecting to the database:", err);
-      res.status(500).send("Internal server error");
-      return;
-    }
-
-    database
-      .getDb()
-      .collection("notes")
-      .insertOne(newNote, function (err, result) {
-        if (err) {
-          console.error("Error inserting a note in the database:", err);
-          res.status(500).send("Internal server error");
-          return;
-        }
-
-        res.status(201).json({
-          message: "Note created successfully",
-          note: result.ops[0],
-        });
-      });
-  });
+  try{
+    const db = await database.connectToServer();
+    console.log("POST /notes/create")
+    db.collection("Notes").insertOne(newNote);
+    res.status(200).json({
+      message: "Note created successfully"
+    });
+  } catch (err) {
+    console.error(`Something went wrong trying to insert a document: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
 });
 
-router.put("/:id/edit", function (req, res, next) {
+router.put("/:id/edit", async function (req, res, next) {
   var noteId = req.params.id;
-  var updatedNote = req.body;
+  var findQuery = { _id: new ObjectId(noteId) };
+  var updateQuery = { $set: req.body };
 
   if (
-    !updatedNote ||
-    !updatedNote.title ||
-    !updatedNote.content
+     !updatedNote ||
+     !updatedNote.title ||
+     !updatedNote.content
   ) {
     res
       .status(400)
@@ -76,56 +52,38 @@ router.put("/:id/edit", function (req, res, next) {
     return;
   }
 
-  database.connectToServer(function (err) {
-    if (err) {
-      console.error("Error connecting to the database:", err);
-      res.status(500).send("Internal server error");
-      return;
-    }
-
-    database
-      .getDb()
-      .collection("notes")
-      .updateOne(
-        { _id: ObjectId(noteId) },
-        { $set: updatedNote },
-        function (err, result) {
-          if (err) {
-            console.error("Error editing the database:", err);
-            res.status(500).send("Internal server error");
-            return;
-          }
-
-          res.status(200).json({ mensaje: "Note edited succesfully" });
-        }
-      );
-  });
+  try{
+    const updateOptions = { returnOriginal: false };
+    const db = await database.connectToServer();
+    const updateResult = db.collection("Notes").findOneAndUpdate(
+      findQuery,
+      updateQuery,
+      updateOptions,
+    );
+    console.log('Document updated');
+    res.status(200).json({
+      message: "Note updated successfully"
+    });
+  } catch (err) {
+    console.error(`Something went wrong trying to update one document: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
 });
 
-router.delete("/:id/delete", function (req, res, next) {
+router.delete("/:id/delete", async function (req, res, next) {
   var noteId = req.params.id;
 
-  database.connectToServer(function (err) {
-    if (err) {
-      console.error("Error connecting to the database:", err);
-      res.status(500).send("Internal server error");
-      return;
-    }
-
-    database
-      .getDb()
-      .collection("notes")
-      .deleteOne({ _id: ObjectId(noteId) }, function (err, result) {
-        if (err) {
-          console.error("Error deleting note from the database:", err);
-          res.status(500).send("Internal server error");
-          return;
-        }
-
-        // Devolver una respuesta de éxito
-        res.status(200).json({ message: "Note deleted succesfully" });
-      });
-  });
+  try{
+    const db = await database.connectToServer();
+    db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
+    console.log("Note deleted successfully");
+    res.status(200).json({
+      message: "Note deleted successfully"
+    });
+  }catch (err) {
+    console.error(`Something went wrong trying to delete a document: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
 });
 
 module.exports = router;
