@@ -1,6 +1,8 @@
 const { MongoClient } = require("mongodb");
 require('dotenv').config();
-const Db = 'mongodb+srv://raulcalzado:k7xtlP6XVWoPpWtA@cluster0.dntsyuz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+// const Db = 'mongodb+srv://raulcalzado:k7xtlP6XVWoPpWtA@cluster0.dntsyuz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const Db = 'mongodb://localhost:27017'
+
 const client = new MongoClient(Db, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
