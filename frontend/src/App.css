@@ -86,6 +86,22 @@
   margin: 0;
   padding: 1rem;
   border: 1px solid #cccc;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.note-title-editable {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid #cccc;
+  width: 100%;
+
+  font-size: 2rem; /* Tamaño de fuente grande */
+  font-weight: bold; /* Texto en negrita */
+  outline: none; /* Eliminar contorno al hacer clic */
+  
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .note-menu {

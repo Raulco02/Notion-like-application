@@ -1,11 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import NoteServiceInstance from '../services/NoteService';
 
 const TextEditor = ({ noteSelected }) => {
-  const [title] = useState(noteSelected.title);
+  const [title, setTitle] = useState(noteSelected.title);
   const [content, setContent] = useState(noteSelected.content);
+  const [editingTitle, setEditingTitle] = useState(false); // Estado para controlar si se está editando el título o no
+
+  // Esto se ejecuta al cargar el componente o cuando noteSelected cambia
+  useEffect(() => {
+    setContent(noteSelected.content);
+    setTitle(noteSelected.title)
+  }, [noteSelected]);
+
+  const handleTitleClick = () => {
+    setEditingTitle(true); // Al hacer clic en el título, cambiamos a modo de edición
+  };
+
+  const handleTitleChange = (event) => {
+    setTitle(event.target.value);
+  };
+
+  const handleTitleBlur = () => {
+    if (!title.trim()) {
+      setTitle('Sin título');
+    } 
+
+    setEditingTitle(false); // Cuando se sale del modo de edición, volvemos al modo de visualización
+  };
+
 
   var modules = {
     toolbar: [
@@ -32,19 +56,36 @@ const TextEditor = ({ noteSelected }) => {
   ];
 
   const saveClick = async () => {
-    // Acciones que deseas realizar cuando se hace clic en el elemento
     const updatedNote = {
       title: title,
       content: content
     }
 
+    console.log(updatedNote);
     try {
-      // Hacer la solicitud PUT al servidor para actualizar la nota
+
       const response = await NoteServiceInstance.updateNoteById(noteSelected._id, updatedNote);
       console.log('La nota se actualizó correctamente:', response.data);
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
     }
+
+  };
+
+  const deleteClick = async () => {
+
+    try {
+      const response = await NoteServiceInstance.deleteNoteById(noteSelected._id);
+      console.log('La nota se eliminó correctamente:', response.data);
+    } catch (error) {
+      console.error('Error al actualizar la nota:', error);
+    }
+
+  };
+
+  const cancelClick  = async () => {
+    setContent(noteSelected.content);
+    setTitle(noteSelected.title);
 
   };
 
@@ -61,22 +102,41 @@ const TextEditor = ({ noteSelected }) => {
             Guardar
           </li>
 
-          <li>
+          <li onClick={cancelClick}>
             Cancelar
           </li>
 
         </ul>
 
         <ul>
-          <li>
+          <li onClick={deleteClick}>
             Eliminar
           </li>
         </ul>
       </nav>
 
-      <h1 className='note-title'> {noteSelected.title} </h1>
+      
+      {editingTitle ? ( // Si estamos editando, mostramos un input para editar el título
+        <input
+          type="text"
+          className="note-title-editable"
+          value={title}
+          onChange={handleTitleChange}
+          onBlur={handleTitleBlur}
+          autoFocus // Enfocar automáticamente el input cuando se cambia a modo de edición
+        />
+      ) : ( // Si no estamos editando, mostramos el título como un h1 que se puede hacer clic
+        <h1
+          className="note-title"
+          onClick={handleTitleClick}
+        >
+          {title}
+        </h1>
+      )}
+
+
       <ReactQuill
-        value={noteSelected.content}
+        value={content}
         theme="snow"
         modules={modules}
         formats={formats}

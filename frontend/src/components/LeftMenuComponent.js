@@ -4,22 +4,43 @@ import { useNavigate } from 'react-router-dom';
 
 const LeftMenuComponent = () => {
   const [notes, setNotes] = useState([]);
+  const [reloadNotes, setReloadNotes] = useState(false); // Estado para recargar las notas
   const navigate = useNavigate();
 
   // Para listar las notas
   useEffect(() => {
-    NoteServiceInstance.getNotes()
-      .then(response => {
-        setNotes(response.data);
-      })
-      .catch(error => {
-        console.error('Error fetching notes:', error);
-      });
-  }, []);
+    updateNotes();
+  }, [reloadNotes]); // Agrega reloadNotes como una dependencia en useEffect
 
-  //para mostrar nota cuando se hace clic
+  // Para mostrar nota cuando se hace clic
   const handleNoteClick = (noteId) => {
     navigate(`/note/${noteId}`);
+  };
+
+  const updateNotes = async () => {
+    try {
+      const response = await NoteServiceInstance.getNotes();
+      setNotes(response.data);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    }
+  }
+
+  const nuevaNotaClick = async (event) => {
+    event.preventDefault();
+    const newNote = {
+      title: "Sin título",
+      content: " "
+    }
+    
+    try {
+      const response = await NoteServiceInstance.createNote(newNote);
+      console.log('Nueva nota añadida:', response.data);
+      setReloadNotes(!reloadNotes); // Actualiza reloadNotes para recargar las notas
+      
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    }
   };
 
   return (
@@ -27,7 +48,7 @@ const LeftMenuComponent = () => {
       <nav className='left-menu'>
         <ul className='top-menu'>
           <li className='clickable'>
-            <span>Nueva nota +</span>
+            <span onClick={nuevaNotaClick}>Nueva nota +</span>
           </li>
         </ul>
 

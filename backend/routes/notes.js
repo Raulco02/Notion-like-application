@@ -66,6 +66,7 @@ router.post("/create", async function (req, res, next) {
 });
 
 router.put("/:id/edit", async function (req, res, next) {
+  var updatedNote = req.body;
   var noteId = req.params.id;
   var findQuery = { _id: new ObjectId(noteId) };
   var updateQuery = { $set: req.body };
