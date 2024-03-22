@@ -1,38 +1,111 @@
-.App {
-  text-align: center;
-}
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+.background {
   min-height: 100vh;
+  min-width: 280px;
+  background-color: #f1f1f1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.content-background {
+  min-height: 90vh;
+  width: 60%;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ajusta los valores según tu preferencia */
+  margin-left: 240px;
+  margin-top: 2rem;
+}
+
+/* Left Menu */
+
+.left-menu {
+  background-color: #1c2229;
+  color: white;
+
+  width: 240px;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.left-menu nav {
+  padding: 15px 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  /* justify-content: space-between; */
+}
+
+.left-menu ul {
+  font-size: larger;
+  list-style-type: none;
+  padding: 0 2rem;
+}
+
+.left-menu li {
+  padding: 8px;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.left-menu i {
+  margin-right: 1.2rem;
+  font-size: 1.4rem;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.left-menu .clickable:hover {
+  transition: background-color 0.2s ease;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: black;
+  cursor: pointer;
+}
+
+/* Text editor */
+.text-editor {
+  min-height: 90vh;
+}
+
+.quill {
+  min-height: 90vh;
+}
+
+.ql-container.ql-snow {
+  min-height: 90vh;
+  border-radius: 0 0 10px 10px;
+}
+
+/* .ql-toolbar.ql-snow {
+  border-radius: 10px 10px 0 0;
+} */
+
+.note-title {
+  text-align: center;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid #cccc;
+}
+
+.note-menu {
+  text-decoration: none;
+  display: flex;
+  justify-content: space-between;
+  border: solid 1px #cccccc;
+  border-radius: 10px 10px 0 0;
+}
+
+.note-menu ul {
+  list-style-type: none;
+  display: flex;
+  padding-left: 1rem;
+}
+
+.note-menu li {
+  margin-right: 2rem;
+}
+
+.note-menu li:hover {
+  cursor: pointer;
 }
