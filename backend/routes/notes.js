@@ -1,15 +1,11 @@
 var express = require("express");
 var router = express.Router();
-var database = require("../db/conn");
-const { ObjectId } = require('mongodb');
+const noteModel = require("../model/noteModel");
 
 
 router.get("/", async function (req, res, next) {
   console.log("GET /notes")
-  const db = await database.connectToServer();
-  const notes = db.collection("Notes").find({});
-  const arrayNotes = await notes.toArray();
-  console.log(arrayNotes)
+  const arrayNotes = await noteModel.getAllNotes();
   res.json(arrayNotes);
 });
 
@@ -24,10 +20,9 @@ router.get("/getById", async function (req, res, next) {
   }
 
   try {
-    const db = await database.connectToServer();
-    // Buscar la nota por su ID en la base de datos
-    const note = await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
     
+    const note = await noteModel.getNoteById(noteId);
+
     if (!note) {
       // Si no se encuentra la nota, devolver un mensaje de error
       res.status(404).json({ message: "Nota no encontrada" });
@@ -36,6 +31,7 @@ router.get("/getById", async function (req, res, next) {
 
     // Devolver la nota encontrada
     res.status(200).json(note);
+    
   } catch (err) {
     console.error(`Error al buscar la nota por ID: ${err}`);
     res.status(500).send("Error interno del servidor");
@@ -51,20 +47,15 @@ router.post("/create", async function (req, res, next) {
   }
 
   try {
-    const db = await database.connectToServer();
-    console.log("POST /notes/create");
-
     // Insertar la nueva nota en la base de datos
-    const result = await db.collection("Notes").insertOne(newNote);
-
-    // Obtener el id de la nota recién creada
-    const insertedId = result.insertedId;
+    const resultId = await noteModel.createNewNote(newNote);
 
     // Devolver el id de la nota como parte de la respuesta
     res.status(200).json({
       message: "Note created successfully",
-      noteId: insertedId
+      noteId: resultId
     });
+
   } catch (err) {
     console.error(`Something went wrong trying to insert a document: ${err}\n`);
     res.status(500).send("Internal server error");
@@ -75,7 +66,7 @@ router.post("/create", async function (req, res, next) {
 router.put("/:id/edit", async function (req, res, next) {
   var updatedNote = req.body;
   var noteId = req.params.id;
-  var findQuery = { _id: new ObjectId(noteId) };
+  // var findQuery = { _id: new ObjectId(noteId) };
   var updateQuery = { $set: req.body };
 
   if (
@@ -90,13 +81,8 @@ router.put("/:id/edit", async function (req, res, next) {
   }
 
   try{
-    const updateOptions = { returnOriginal: false };
-    const db = await database.connectToServer();
-    const updateResult = db.collection("Notes").findOneAndUpdate(
-      findQuery,
-      updateQuery,
-      updateOptions,
-    );
+    await noteModel.updateNoteById(noteId, updateQuery);
+    
     console.log('Document updated');
     res.status(200).json({
       message: "Note updated successfully"
@@ -111,8 +97,9 @@ router.delete("/:id/delete", async function (req, res, next) {
   var noteId = req.params.id;
 
   try{
-    const db = await database.connectToServer();
-    db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
+    // const db = await database.connectToServer();
+    // db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
+    await noteModel.deleteNoteById(noteId);
     console.log("Note deleted successfully");
     res.status(200).json({
       message: "Note deleted successfully"
