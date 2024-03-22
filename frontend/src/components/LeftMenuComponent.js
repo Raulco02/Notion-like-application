@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import NoteServiceInstance from '../services/NoteService';
 import { useNavigate } from 'react-router-dom';
 
-const LeftMenuComponent = () => {
+const LeftMenuComponent = ( { reloadNotes, setReloadNotes } ) => {
   const [notes, setNotes] = useState([]);
-  const [reloadNotes, setReloadNotes] = useState(false); // Estado para recargar las notas
+  //const [reloadNotes, setReloadNotes] = useState(false); // Estado para recargar las notas
   const navigate = useNavigate();
 
   // Para listar las notas
@@ -37,6 +37,8 @@ const LeftMenuComponent = () => {
       const response = await NoteServiceInstance.createNote(newNote);
       console.log('Nueva nota añadida:', response.data);
       setReloadNotes(!reloadNotes); // Actualiza reloadNotes para recargar las notas
+     
+      navigate(`/note/${response.data.noteId}`);
       
     } catch (error) {
       console.error('Error fetching notes:', error);

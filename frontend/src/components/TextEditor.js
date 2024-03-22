@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import NoteServiceInstance from '../services/NoteService';
+import { useNavigate } from 'react-router-dom';
 
-const TextEditor = ({ noteSelected }) => {
+const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
+  const navigate = useNavigate();
   const [title, setTitle] = useState(noteSelected.title);
   const [content, setContent] = useState(noteSelected.content);
   const [editingTitle, setEditingTitle] = useState(false); // Estado para controlar si se está editando el título o no
@@ -66,6 +68,8 @@ const TextEditor = ({ noteSelected }) => {
 
       const response = await NoteServiceInstance.updateNoteById(noteSelected._id, updatedNote);
       console.log('La nota se actualizó correctamente:', response.data);
+      setReloadNotes(!reloadNotes);
+
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
     }
@@ -77,6 +81,10 @@ const TextEditor = ({ noteSelected }) => {
     try {
       const response = await NoteServiceInstance.deleteNoteById(noteSelected._id);
       console.log('La nota se eliminó correctamente:', response.data);
+      setReloadNotes(!reloadNotes);
+      navigate('/');
+
+
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
     }

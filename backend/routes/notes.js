@@ -46,24 +46,31 @@ router.post("/create", async function (req, res, next) {
   var newNote = req.body;
 
   if (!newNote || !newNote.title || !newNote.content) {
-    res
-      .status(400)
-      .send("Title and content are required to create a new note");
+    res.status(400).send("Title and content are required to create a new note");
     return;
   }
 
-  try{
+  try {
     const db = await database.connectToServer();
-    console.log("POST /notes/create")
-    db.collection("Notes").insertOne(newNote);
+    console.log("POST /notes/create");
+
+    // Insertar la nueva nota en la base de datos
+    const result = await db.collection("Notes").insertOne(newNote);
+
+    // Obtener el id de la nota recién creada
+    const insertedId = result.insertedId;
+
+    // Devolver el id de la nota como parte de la respuesta
     res.status(200).json({
-      message: "Note created successfully"
+      message: "Note created successfully",
+      noteId: insertedId
     });
   } catch (err) {
     console.error(`Something went wrong trying to insert a document: ${err}\n`);
     res.status(500).send("Internal server error");
   }
 });
+
 
 router.put("/:id/edit", async function (req, res, next) {
   var updatedNote = req.body;
