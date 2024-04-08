@@ -5,9 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import NoteServiceInstance from '../services/NoteService';
 import ImageResize from 'quill-image-resize-module-react';
 
+window.Quill = Quill
 Quill.register('modules/imageResize', ImageResize);
 
 const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
+
+
   const navigate = useNavigate();
   const [title, setTitle] = useState(noteSelected.title);
   const [content, setContent] = useState(noteSelected.content);
