@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import ReactQuill from 'react-quill';
+import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import NoteServiceInstance from '../services/NoteService';
 import { useNavigate } from 'react-router-dom';
+import NoteServiceInstance from '../services/NoteService';
+import ImageResize from 'quill-image-resize-module-react';
+
+Quill.register('modules/imageResize', ImageResize);
 
 const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
   const navigate = useNavigate();
   const [title, setTitle] = useState(noteSelected.title);
   const [content, setContent] = useState(noteSelected.content);
-  const [editingTitle, setEditingTitle] = useState(false); // Estado para controlar si se está editando el título o no
+  const [editingTitle, setEditingTitle] = useState(false);
 
-  // Esto se ejecuta al cargar el componente o cuando noteSelected cambia
   useEffect(() => {
     setContent(noteSelected.content);
-    setTitle(noteSelected.title)
+    setTitle(noteSelected.title);
   }, [noteSelected]);
 
   const handleTitleClick = () => {
-    setEditingTitle(true); // Al hacer clic en el título, cambiamos a modo de edición
+    setEditingTitle(true);
   };
 
   const handleTitleChange = (event) => {
@@ -27,95 +29,78 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
   const handleTitleBlur = () => {
     if (!title.trim()) {
       setTitle('Sin título');
-    } 
-
-    setEditingTitle(false); // Cuando se sale del modo de edición, volvemos al modo de visualización
+    }
+    setEditingTitle(false);
   };
 
-
-  var modules = {
+  const modules = {
     toolbar: [
-      [{ size: ["small", false, "large", "huge"] }],
-      ["bold", "italic", "underline", "strike", "blockquote"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link", "image"],
-      [
-        { list: "ordered" },
-        { list: "bullet" },
-        { indent: "-1" },
-        { indent: "+1" },
-        { align: [] }
-      ],
-      [{ "color": ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color'] }],
-    ]
+      [{ size: ['small', false, 'large', 'huge'] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link', 'image', 'video', 'audio'],
+      [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }, { align: [] }],
+      [{ 'color': ['#000000', '#e60000', '#ff9900', '#ffff00', '#008a00', '#0066cc', '#9933ff', '#ffffff', '#facccc', '#ffebcc', '#ffffcc', '#cce8cc', '#cce0f5', '#ebd6ff', '#bbbbbb', '#f06666', '#ffc266', '#ffff66', '#66b966', '#66a3e0', '#c285ff', '#888888', '#a10000', '#b26b00', '#b2b200', '#006100', '#0047b2', '#6b24b2', '#444444', '#5c0000', '#663d00', '#666600', '#003700', '#002966', '#3d1466', 'custom-color'] }],
+    ],
+    imageResize: {
+      parchment: Quill.import('parchment'),
+      modules: ['Resize', 'DisplaySize']
+    }
   };
 
-  var formats = [
-    "header", "height", "bold", "italic",
-    "underline", "strike", "blockquote",
-    "list", "color", "bullet", "indent",
-    "link", "image", "align", "size",
+  const formats = [
+    'header', 'height', 'bold', 'italic',
+    'underline', 'strike', 'blockquote',
+    'list', 'color', 'bullet', 'indent',
+    'link', 'image', 'video', 'align', 'size',
   ];
 
   const saveClick = async () => {
     const updatedNote = {
       title: title,
       content: content
-    }
+    };
 
-    console.log(updatedNote);
     try {
-
       const response = await NoteServiceInstance.updateNoteById(noteSelected._id, updatedNote);
       console.log('La nota se actualizó correctamente:', response.data);
       setReloadNotes(!reloadNotes);
-
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
     }
-
   };
 
   const deleteClick = async () => {
-
     try {
       const response = await NoteServiceInstance.deleteNoteById(noteSelected._id);
       console.log('La nota se eliminó correctamente:', response.data);
       setReloadNotes(!reloadNotes);
       navigate('/');
-
-
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
     }
-
   };
 
-  const cancelClick  = async () => {
+  const cancelClick = async () => {
     setContent(noteSelected.content);
     setTitle(noteSelected.title);
-
   };
 
-  const handleProcedureContentChange = (newcontent) => {
-    setContent(newcontent);
+  const handleProcedureContentChange = (newContent) => {
+    setContent(newContent);
   };
 
   return (
     <div className='text-editor'>
-
       <nav className='note-menu'>
         <ul>
           <li onClick={saveClick}>
             Guardar
           </li>
-
           <li onClick={cancelClick}>
             Cancelar
           </li>
-
         </ul>
-
         <ul>
           <li onClick={deleteClick}>
             Eliminar
@@ -123,17 +108,16 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
         </ul>
       </nav>
 
-      
-      {editingTitle ? ( // Si estamos editando, mostramos un input para editar el título
+      {editingTitle ? (
         <input
           type="text"
           className="note-title-editable"
           value={title}
           onChange={handleTitleChange}
           onBlur={handleTitleBlur}
-          autoFocus // Enfocar automáticamente el input cuando se cambia a modo de edición
+          autoFocus
         />
-      ) : ( // Si no estamos editando, mostramos el título como un h1 que se puede hacer clic
+      ) : (
         <h1
           className="note-title"
           onClick={handleTitleClick}
@@ -142,7 +126,6 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
         </h1>
       )}
 
-
       <ReactQuill
         value={content}
         theme="snow"
@@ -150,8 +133,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
         formats={formats}
         placeholder="Escribe lo que quieras ...."
         onChange={handleProcedureContentChange}
-      >
-      </ReactQuill>
+      />
     </div>
   );
 };
