@@ -26,7 +26,7 @@ app.use('/notes', notesRouter);
 const port = process.env.PORT || 3001;
 
 app.listen(port, () => {
-  console.log(`Aplicación Express escuchando en el puerto ${port}`);
+  console.log(`Listening on port: ${port}`);
 });
 
 module.exports = app;
