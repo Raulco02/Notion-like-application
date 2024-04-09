@@ -27,6 +27,10 @@ class UserService {
         return axios.post(USER_BASE_REST_API_URL + '/login');
     }
 
+    register(){
+        return axios.post(USER_BASE_REST_API_URL + '/register');
+    }
+
 }
 
 const UserServiceInstance = new UserService();
