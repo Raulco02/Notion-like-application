@@ -23,12 +23,19 @@ class UserService {
         return axios.delete(`${USER_BASE_REST_API_URL}/${id}/delete`);
     }
 
-    login(){
-        return axios.post(USER_BASE_REST_API_URL + '/login');
+    login(credentials){
+        return axios.put(USER_BASE_REST_API_URL + '/login', credentials, {withCredentials: true});
     }
 
-    register(){
-        return axios.post(USER_BASE_REST_API_URL + '/register');
+    register(user){
+        return axios.post(USER_BASE_REST_API_URL + '/register', user, {withCredentials: true});
+    }
+
+    getProfile(){
+        return axios.get(USER_BASE_REST_API_URL + '/getProfile', {withCredentials: true});
+    }
+    logout(){
+        return axios.post(USER_BASE_REST_API_URL + '/logout', {withCredentials: true});
     }
 
 }

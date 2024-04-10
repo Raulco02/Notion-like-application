@@ -19,7 +19,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Habilita CORS
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3002',
+  credentials: true
+}));
 
 // Configura el middleware de sesión con una clave secreta generada automáticamente
 app.use(session({

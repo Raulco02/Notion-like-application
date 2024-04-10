@@ -35,7 +35,7 @@ router.put("/login", async function (req, res, next) { //REVISAR
     req.session.user_id = user._id;
     req.session.register = true;
 
-    return res.status(200).json({ httpId });
+    return res.status(200).json({ "httpId": httpId });
   } catch (err) {
     console.error(`Error signing in: ${err}`);
     return res.status(500).json({ error: "Internal server error" });
@@ -46,6 +46,10 @@ router.get("/getProfile", async function (req, res, next) {
   try {
     const session = req.session;
     const registered = session.register;
+
+    console.log("Session: ", session);
+    console.log("Registered: ", registered);
+    console.log("User ID: ", session.user_id);
 
     if (!registered) {
       return res.status(404).json({ error: "User does not have a session or is not signed up" });
@@ -84,7 +88,8 @@ router.post("/register", async function (req, res, next) {
       return res.status(400).json({ error: "Passwords do not match" });
     }
     password = crypto.createHash('sha256').update(pwd1).digest('hex');
-    await userModel.createNewUser({userName, email, password});
+    const role = "u"
+    await userModel.createNewUser({userName, email, password, role});
 
     return res.status(200).json({ message: "User signed up correctly" });
   } catch (err) {
@@ -92,6 +97,20 @@ router.post("/register", async function (req, res, next) {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+router.post('/logout', (req, res) => {
+  console.log("Session before logout:", session);
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Error al cerrar sesión:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    // Envía una respuesta exitosa
+    res.status(200).json({ message: 'Logout exitoso' });
+  });
+  console.log("Session after logout:", session);
+});
+
 
 router.get("/getById", async function (req, res, next) {
   const userId = req.query.id; // ID de la nota solicitada

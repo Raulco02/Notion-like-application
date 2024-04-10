@@ -1,0 +1,39 @@
+.background-menu {
+    min-height: 100vh;
+    min-width: 280px;
+    background-color: #f1f1f1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.content-background-menu {
+    min-height: 85vh;
+    width: 80%;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ajusta los valores según tu preferencia */
+    position: absolute; /* Usamos position: absolute para poder centrar el elemento */
+    top: 55%; /* Lo posicionamos verticalmente en el centro */
+    left: 50%; /* Lo posicionamos horizontalmente en el centro */
+    transform: translate(-50%, -50%); /* Aplicamos transform para ajustar el centro del elemento */
+    overflow-y: auto;
+  }
+  .navbar-menu {
+    background-color: #1c2229;
+    color: white;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000; /* Asegura que la barra de navegación esté por encima de otros elementos */
+  }
+  .btn-menu{
+    background-color: transparent;
+    border: 1px solid grey;
+    margin-left: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 5px 10px;
+    width: 20%;
+    height: 100px;
+  }

@@ -12,8 +12,8 @@ const Register = () => {
 
     const handleSignup = async() => {
             try {
-              await UserServiceInstance.register({ nombre, correo, pwd1, pwd2 }); //Hay que comprobar que se haga bien
-              navigate('/login');
+              await UserServiceInstance.register({ "userName": nombre, "email": correo, "pwd1": pwd1, "pwd2": pwd2 }); //Hay que comprobar que se haga bien
+              navigate('/');
             } catch (error) {
               console.error('Error al registrarse:', error);
             }

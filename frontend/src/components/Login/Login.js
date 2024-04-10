@@ -10,9 +10,9 @@ const Login = () => {
 
     const handleLogin = async() => {
             try {
-              const id = await UserServiceInstance.login({ correo, password });
-              console.log(id.httpId); 
-              sessionStorage.setItem('httpId', id.httpId);
+              const id = await UserServiceInstance.login({ "email": correo, "password": password });
+              console.log(id.data.httpId); 
+              sessionStorage.setItem('httpId', id.data.httpId);
               navigate('/menu');
             } catch (error) {
               console.error('Error signing in:', error);
