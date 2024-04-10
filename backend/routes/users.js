@@ -74,7 +74,7 @@ router.get("/getProfile", async function (req, res, next) {
   }
 });
 
-router.post("/register", async function (req, res, next) {
+router.post("/register", async function (req, res, next) { //No comprueba que no haya otro usuario ya registrado
   try {
     let { userName, email, pwd1, pwd2 } = req.body;
     if (!userName || !email || !pwd1 || !pwd2) {

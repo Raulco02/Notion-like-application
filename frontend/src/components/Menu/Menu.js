@@ -1,30 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Menu.css';
 import Navbar from '../Navbar/Navbar';
+import SignUpBox from '../Signup/SignupBox';
+import UserServiceInstance from '../../services/UserService';
 
 const MenuComponent = () => {
     const [inCollections, setInCollections] = useState(false);
     const [inUsersManagement, setInUsersManagement] = useState(false);
     const [collectionsList, setCollectionsList] = useState(['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7']); // Lista de elementos para Collections
-    const [usersList, setUsersList] = useState(['User 1', 'User 2', 'User 3', 'User 4', 'User 5', 'User 6', 'User 7']); // Lista de elementos para Users Management
+    const [usersList, setUsersList] = useState({}); // Lista de elementos para Users Management
+    const [addingCollection, setAddingCollection] = useState(false);
+    const [addingUser, setAddingUser] = useState(false);
+    const [editingUser, setEditingUser] = useState(false);
+    const [userSelected, setUserSelected] = useState('');
 
     const handleCollections = () => {
         setInCollections(true);
         setInUsersManagement(false);
     };
 
-    const handleUsers = () => {
+    const handleUsers = async () => {
         setInCollections(false);
         setInUsersManagement(true);
+        try {
+            const response = await UserServiceInstance.getUsers(); //Hay que comprobar que se haga bien
+            const usersDictionary = response.data.reduce((acc, user) => {
+                acc[user._id] = user.userName;
+                return acc;
+            }, {});
+            setUsersList(usersDictionary);
+            setAddingUser(false);
+        } catch (error) {
+            console.error('Error al registrarse:', error);
+        }
     };
 
     const addCollection = () => {
         setCollectionsList([...collectionsList, 'New Item']);
+        setInCollections(false);
+        setAddingCollection(true);
     };
 
     const addUser = () => {
-        setUsersList([...usersList, 'New User']);
+        setInUsersManagement(false);
+        setAddingUser(true);
     };
+    
+    const handleCreateUser = async(nombre, correo, pwd1, pwd2) => {
+        try {
+            await UserServiceInstance.register({ "userName": nombre, "email": correo, "pwd1": pwd1, "pwd2": pwd2 }); //Hay que comprobar que se haga bien
+            setAddingUser(false);
+        } catch (error) {
+            console.error('Error al registrarse:', error);
+          }
+    }
+
+    const handleEditUser = (id) => {
+        setUserSelected(id);
+        setInUsersManagement(false);
+        setEditingUser(true);
+        console.log(userSelected);
+    };
+
+    const editUser = async(nombre, correo, pwd1, pwd2) => { //Hay que manejar que puede que haya algún campo que no se quiera editas
+        try {
+            await UserServiceInstance.updateUser(userSelected, { "userName": nombre, "email": correo, "pwd1": pwd1, "pwd2": pwd2 }); 
+            setEditingUser(false);
+            setUserSelected('');
+        } catch (error) {
+            console.error('Error al registrarse:', error);
+          }
+    }
 
     return (
         <div className='background-menu'>
@@ -43,14 +89,23 @@ const MenuComponent = () => {
                 )}
                 {inUsersManagement && (
                     <div>
-                        {usersList.map((item, index) => (
-                            <button key={index} className='btn-menu'>{item}</button>
+                        {Object.entries(usersList).map(([id, name]) => (
+                            <button key={id} onClick={() => handleEditUser(id)} className='btn-menu'>{name}</button>
                         ))}
                         <button key='+ User' onClick={addUser} className='btn-menu'>+</button>
                     </div>
                 )}
+
+                {addingUser && (
+                    <SignUpBox handleSignup={handleCreateUser}/>
+                )}
+
+                {editingUser && (
+                    <SignUpBox handleSignup={editUser} username={userSelected}/>
+                )}
+
                 {/* Botones de navegación */}
-                {!inCollections && !inUsersManagement && (
+                {!inCollections && !inUsersManagement && !addingCollection && !addingUser && !editingUser && (
                     <React.Fragment>
                         <button className='btn-menu' onClick={handleCollections}>Collections</button>
                         <button className='btn-menu' onClick={handleUsers}>Users Management</button>
