@@ -41,6 +41,7 @@ class userModel {
         password = crypto.createHash('sha256').update(password).digest('hex');
         if(user.password === password){
             return user;
+        }
     }
 }
 
