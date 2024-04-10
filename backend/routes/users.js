@@ -24,8 +24,10 @@ router.put("/login", async function (req, res, next) { //REVISAR
       return res.status(404).json({ error: "User not found" });
     }
 
-    let httpId = req.sessionID; // PUEDE QUE ESTO SEA UN ERROR
+    let httpId = req.sessionID;
 
+    console.log("User: ", user);
+    console.log("httpId: ", httpId);
     if (!httpId) {
       httpId = crypto.randomBytes(16).toString("hex");
     }
@@ -71,7 +73,6 @@ router.get("/getProfile", async function (req, res, next) {
 router.post("/register", async function (req, res, next) {
   try {
     let { userName, email, pwd1, pwd2 } = req.body;
-
     if (!userName || !email || !pwd1 || !pwd2) {
       return res.status(400).json({ error: "Username, email, password and confirmation are required" });
     }
@@ -82,13 +83,13 @@ router.post("/register", async function (req, res, next) {
     if (pwd1 !== pwd2) {
       return res.status(400).json({ error: "Passwords do not match" });
     }
-    pwd1 = crypto.createHash('sha256').update(pwd1).digest('hex');
-    await userModel.createNewUser({username, email, pwd1});
+    password = crypto.createHash('sha256').update(pwd1).digest('hex');
+    await userModel.createNewUser({userName, email, password});
 
     return res.status(200).json({ message: "User signed up correctly" });
   } catch (err) {
-    console.error(`Error al registrar usuario: ${err}`);
-    return res.status(500).json({ error: "Error interno del servidor" });
+    console.error(`Error signing up: ${err}`);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
