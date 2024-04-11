@@ -9,6 +9,7 @@ const SignUpBox = ({handleSignup, userId}) => {
     const [pwd2, setPwd2] = useState('');
     
     useEffect(() => {
+      console.log('UserID en signup:', userId);
         if (userId) {
           // Si se proporciona un nombre de usuario, obtener los datos del usuario
           UserServiceInstance.getUserById(userId)
@@ -20,7 +21,7 @@ const SignUpBox = ({handleSignup, userId}) => {
             .catch(error => {
               console.error('Error al obtener los datos del usuario:', error);
             });
-        }
+        } 
       }, [userId]);
 
   return (
