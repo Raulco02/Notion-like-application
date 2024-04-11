@@ -38,7 +38,11 @@ class noteModel {
         return await db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
     }
 
-
+    async getUserNotes(userId) {
+        const db = await database.connectToServer();
+        const notes = db.collection("Notes").find({ user_id: userId });
+        return await notes.toArray();
+    }
 
 }
 

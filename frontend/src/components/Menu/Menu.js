@@ -3,6 +3,7 @@ import './Menu.css';
 import Navbar from '../Navbar/Navbar';
 import SignUpBox from '../Signup/SignupBox';
 import UserServiceInstance from '../../services/UserService';
+import collectionServiceInstance from '../../services/CollectionService';
 import { useNavigate } from 'react-router-dom';
 
 const MenuComponent = () => {
@@ -37,9 +38,20 @@ const MenuComponent = () => {
         }
     }, []);
 
-    const handleCollections = () => {
+    const handleCollections = async () => {
         setInCollections(true);
         setInUsersManagement(false);
+        try {
+            const response = await collectionServiceInstance.getCollections(); //Hay que comprobar que se haga bien
+            const collectionsDictionary = response.data.reduce((acc, collection) => {
+                acc[collection._id] = collection.name;
+                return acc;
+            }, {});
+            setCollectionsList(collectionsDictionary);
+            setAddingCollection(false);
+        } catch (error) {
+            console.error('Error al registrarse:', error);
+        }
     };
 
     const handleUsers = async () => {
@@ -59,7 +71,6 @@ const MenuComponent = () => {
     };
 
     const addCollection = () => {
-        setCollectionsList([...collectionsList, 'New Item']);
         setInCollections(false);
         setAddingCollection(true);
     };
@@ -109,8 +120,8 @@ const MenuComponent = () => {
                 {/* Renderizar botones según la lista activa */}
                 {inCollections && (
                     <div>
-                        {collectionsList.map((item, index) => (
-                            <button key={index} className='btn-menu'>{item}</button>
+                        {Object.entries(collectionsList).map(([id, name]) => (
+                            <button key={id} className='btn-menu'>{name}</button>
                         ))}
                         <button key='+ Collection' onClick={addCollection} className='btn-menu'>+</button>
                     </div>

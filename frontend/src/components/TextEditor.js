@@ -81,7 +81,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
       const response = await NoteServiceInstance.deleteNoteById(noteSelected._id);
       console.log('La nota se eliminó correctamente:', response.data);
       setReloadNotes(!reloadNotes);
-      navigate('/');
+      navigate('/noteMenu');
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
     }

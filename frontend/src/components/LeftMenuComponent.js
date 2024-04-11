@@ -36,6 +36,7 @@ const LeftMenuComponent = ( { reloadNotes, setReloadNotes } ) => {
   const handleNoteClick = (noteId) => {
     navigate(`/note/${noteId}`);
   };
+
   const logoutClick = (noteId) => {
     sessionStorage.removeItem('httpId');
     async function logout() {
@@ -52,7 +53,7 @@ const LeftMenuComponent = ( { reloadNotes, setReloadNotes } ) => {
 
   const updateNotes = async () => {
     try {
-      const response = await NoteServiceInstance.getNotes();
+      const response = await NoteServiceInstance.getUserNotes();
       setNotes(response.data);
     } catch (error) {
       console.error('Error fetching notes:', error);
