@@ -103,7 +103,7 @@ const MenuComponent = () => {
     return (
         <div className='background-menu'>
             <div className='navbar-menu'>
-                <Navbar />
+                <Navbar isAdmin={isAdmin}/>
             </div>
             <div className='content-background-menu'>
                 {/* Renderizar botones según la lista activa */}

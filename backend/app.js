@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const notesRouter = require('./routes/notes');
+const collectionsRouter = require('./routes/collections');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use(session({
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/notes', notesRouter);
+app.use('/collections', collectionsRouter);
 
 const port = process.env.PORT || 3001;
 
