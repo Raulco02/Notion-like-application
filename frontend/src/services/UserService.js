@@ -15,8 +15,8 @@ class UserService {
         return axios.get(USER_BASE_REST_API_URL + '/getById?id=' + id);
     }
 
-    updateUserById(id, updatedNote) {
-        return axios.put(`${USER_BASE_REST_API_URL}/${id}/edit`, updatedNote);
+    updateUserById(updatedNote) {
+        return axios.put(`${USER_BASE_REST_API_URL}/edit`, updatedNote);
     }
 
     deleteUserById(id) {

@@ -3,6 +3,8 @@ var router = express.Router();
 const noteModel = require("../model/noteModel");
 const userModel = require("../model/userModel");
 
+//¿Controlar que el usuario sea admin para según qué acciones?¿Añadir boolean admin a session?
+
 
 router.get("/", async function (req, res, next) {
   console.log("GET /notes")
@@ -51,6 +53,7 @@ router.get("/getUserNotes", async function (req, res, next) {
     res.status(401).json({ message: "User is not signed in" });
     return;
   }
+  console.log('user ID en getUserNotes:', userId);
 
   try {
     userNotes = await noteModel.getUserNotes(userId);
@@ -60,6 +63,7 @@ router.get("/getUserNotes", async function (req, res, next) {
       res.status(404).json({ message: "User notes not found" });
       return;
     }
+    console.log(userNotes)
 
     // Devolver la nota encontrada
     res.status(200).json(userNotes);
@@ -72,6 +76,11 @@ router.get("/getUserNotes", async function (req, res, next) {
 router.post("/create", async function (req, res, next) {
   var newNote = req.body;
   var userId = req.session.user_id;
+  var userId = req.session.user_id;
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
   newNote.user_id = userId;
   if (!newNote || !newNote.title || !newNote.content) {
     res.status(400).send("Title, content are required to create a new note");

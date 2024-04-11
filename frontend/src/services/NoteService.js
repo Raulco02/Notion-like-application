@@ -15,8 +15,8 @@ class NoteService {
         return axios.get(USER_BASE_REST_API_URL + '/getById?id=' + id, {withCredentials: true});
     }
 
-    getUserNotes(id) {
-        return axios.get(USER_BASE_REST_API_URL + '/getUserNotes?id=' + id, {withCredentials: true});
+    getUserNotes() {
+        return axios.get(USER_BASE_REST_API_URL + '/getUserNotes', {withCredentials: true});
     }
 
     updateNoteById(id, updatedNote) {

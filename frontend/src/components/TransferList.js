@@ -16,7 +16,7 @@ function intersection(a, b) {
   return a.filter((value) => b.indexOf(value) !== -1);
 }
 
-export default function TransferList({izq, der}) {
+export default function TransferList({setNotes, izq, der}) {
   const [checked, setChecked] = React.useState([]);
   const [left, setLeft] = React.useState([0, 1, 2, 3]);
   const [right, setRight] = React.useState([4, 5, 6, 7]);
@@ -45,23 +45,27 @@ export default function TransferList({izq, der}) {
   const handleAllRight = () => {
     setRight(right.concat(left));
     setLeft([]);
+    setNotes(right.concat(left));
   };
 
   const handleCheckedRight = () => {
     setRight(right.concat(leftChecked));
     setLeft(not(left, leftChecked));
     setChecked(not(checked, leftChecked));
+    setNotes(right.concat(leftChecked));
   };
 
   const handleCheckedLeft = () => {
     setLeft(left.concat(rightChecked));
     setRight(not(right, rightChecked));
     setChecked(not(checked, rightChecked));
+    setNotes(not(right, rightChecked));
   };
 
   const handleAllLeft = () => {
     setLeft(left.concat(right));
     setRight([]);
+    setNotes([]);
   };
 
   const customList = (items) => (
@@ -86,7 +90,7 @@ export default function TransferList({izq, der}) {
                   }}
                 />
               </ListItemIcon>
-              <ListItemText id={labelId} primary={`List item ${value + 1}`} />
+              <ListItemText id={labelId} primary={`${value}`} />
             </ListItemButton>
           );
         })}

@@ -9,7 +9,10 @@ function Navbar({isAdmin}) {
     navigate('/menu'); 
   }
   const handleClickUsers = () => {
-    navigate('/'); 
+    navigate('/usersManagement'); 
+  }
+  const handleClickCollections = () => {
+    navigate('/collections'); 
   }
   const handleClickLogout = () => {
     sessionStorage.removeItem('httpId');
@@ -32,7 +35,7 @@ function Navbar({isAdmin}) {
       </div>
       <div className="navbar-right">
         {/* Botones a la derecha */}
-        <button onClick={handleClickHome} className="navbar-button">Collections</button>
+        <button onClick={handleClickCollections} className="navbar-button">Collections</button>
         {isAdmin && <button onClick={handleClickUsers} className="navbar-button">Users Management</button>}
         <button  onClick={handleClickLogout} className="navbar-button">Logout</button>
       </div>

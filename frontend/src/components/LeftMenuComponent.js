@@ -37,20 +37,6 @@ const LeftMenuComponent = ( { reloadNotes, setReloadNotes } ) => {
     navigate(`/note/${noteId}`);
   };
 
-  const logoutClick = (noteId) => {
-    sessionStorage.removeItem('httpId');
-    async function logout() {
-      try {
-        const response = await UserServiceInstance.logout();
-        console.log(response.data.message);
-        navigate('/');
-      } catch (error) {
-        console.error('Error logging out:', error);
-      }
-    };
-    logout();
-  };
-
   const updateNotes = async () => {
     try {
       const response = await NoteServiceInstance.getUserNotes();
@@ -83,9 +69,6 @@ const LeftMenuComponent = ( { reloadNotes, setReloadNotes } ) => {
     <div>
       <nav className='left-menu'>
         <ul className='top-menu'>
-          <li className='clickable'>
-            <span onClick={logoutClick}>Logout</span>
-          </li>
           <li>
             {userName && (<span><strong>{userName}'s notes</strong></span>)}
           </li>
@@ -110,11 +93,6 @@ const LeftMenuComponent = ( { reloadNotes, setReloadNotes } ) => {
           ))}
 
         </ul>
-        {(role==='a' && <ul className='top-menu'>
-          <li className='clickable'>
-            <span onClick={nuevaNotaClick}>Users management</span>
-          </li>
-        </ul>)}
       </nav>
     </div>
   );

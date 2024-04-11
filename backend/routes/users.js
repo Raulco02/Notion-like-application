@@ -3,6 +3,8 @@ var express = require('express');
 const userModel = require('../model/userModel');
 var router = express.Router();
 
+//¿Controlar que el usuario sea admin para según qué acciones?¿Añadir boolean admin a session?
+
 /* GET users listing. */
 router.get('/', async function(req, res, next) {
   console.log("GET /users")
@@ -171,11 +173,11 @@ router.put("/edit", async function (req, res, next) {
 
   if (
      !updatedUser ||
-     !updatedUser.id
+     !updatedUser._id
   ) {
     res
       .status(400)
-      .send("ID is required to update a user");
+      .send("_id is required to update a user");
     return;
   }
 

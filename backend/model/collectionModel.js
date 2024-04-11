@@ -8,7 +8,7 @@ class collectionModel {
         return await collections.toArray();
       }
 
-    async getcollectionById(collectionId) {
+    async getCollectionById(collectionId) {
         const db = await database.connectToServer();
         return await db.collection("Collections").findOne({ _id: new ObjectId(collectionId) });
     }
@@ -36,6 +36,12 @@ class collectionModel {
     async deletecollectionById(collectionId) {
         const db = await database.connectToServer();
         return await db.collection("Collections").deleteOne({ _id: new ObjectId(collectionId) });
+    }
+
+    async getUserCollections(userId) {
+        const db = await database.connectToServer();
+        const notes = db.collection("Collections").find({ user_id: userId });
+        return await notes.toArray();
     }
 }
 
