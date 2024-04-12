@@ -15,7 +15,7 @@
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ajusta los valores según tu preferencia */
   margin-left: 240px;
-  margin-top: 2rem;
+  margin-top: 4rem;
 }
 
 /* Left Menu */
@@ -24,14 +24,17 @@
   background-color: #1c2229;
   color: white;
 
-  width: 240px;
+  min-width: 240px;
   position: fixed;
   left: 0;
   top: 0;
+  overflow-y: scroll;
+
+  z-index: 1000;
 }
 
 .left-menu nav {
-  padding: 15px 0;
+  padding: 1rem 1rem 0 1rem;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -41,11 +44,11 @@
 .left-menu ul {
   font-size: larger;
   list-style-type: none;
-  padding: 0 2rem;
+  padding: 0 .2rem;
 }
 
 .left-menu li {
-  padding: 8px;
+  padding: 0.2rem 0.2rem; 
   display: flex;
   align-items: center;
 }
@@ -125,3 +128,57 @@
 .note-menu li:hover {
   cursor: pointer;
 }
+
+.note-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+
+.MuiTreeItem-content {
+  min-width: 100%;
+  background-color: transparent;
+}
+
+.Mui-expanded  {
+  /* min-width: 100%; */
+}
+
+.Mui-selected {
+  /* min-width: 100%; */
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: black !important;
+}
+
+.Mui-focused {
+  /* min-width: 100%; */
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: black !important;
+}
+
+.css-1txipvs-MuiTreeItem-content {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.css-ruxyj4-MuiTreeItem2-content {
+  /* background-color: transparent !important; */
+}
+
+.MuiTreeItem-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.css-ruxyj4-MuiTreeItem2-content:hover {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: black !important;
+}
+
+.css-ruxyj4-MuiTreeItem2-content {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: black !important;
+}
+

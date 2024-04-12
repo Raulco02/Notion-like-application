@@ -5,40 +5,34 @@ import UserServiceInstance from '../../services/UserService'; // Importa el serv
 
 function Navbar({isAdmin}) {
   const navigate = useNavigate(); // Inicializa el hook useNavigate
-  const handleClickHome = () => {
-    navigate('/menu'); 
-  }
+
   const handleClickUsers = () => {
     navigate('/usersManagement'); 
   }
-  const handleClickCollections = () => {
-    navigate('/collections'); 
-  }
+
   const handleClickLogout = () => {
-    sessionStorage.removeItem('httpId');
+    sessionStorage.removeItem('httpId'); //No parece que funcione, lo sigue mandando
     async function logout() {
       try {
         const response = await UserServiceInstance.logout();
         console.log(response.data.message);
-        navigate('/');
       } catch (error) {
         console.error('Error logging out:', error);
       }
     };
     logout(); 
+    navigate('/');
   }
   return (
     <div className="navbar">
-      <div className="navbar-left">
-        {/* Aquí puedes agregar cualquier contenido que quieras a la izquierda */}
-        <button onClick={handleClickHome} className="navbar-button">Home</button>
-      </div>
+
       <div className="navbar-right">
         {/* Botones a la derecha */}
-        <button onClick={handleClickCollections} className="navbar-button">Collections</button>
+
         {isAdmin && <button onClick={handleClickUsers} className="navbar-button">Users Management</button>}
         <button  onClick={handleClickLogout} className="navbar-button">Logout</button>
       </div>
+
     </div>
   );
 }

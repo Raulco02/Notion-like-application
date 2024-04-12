@@ -2,6 +2,7 @@ import axios from "axios";
 
 const USER_BASE_REST_API_URL = "http://localhost:3001/users";
 
+
 class UserService {
     getUsers() {
         return axios.get(USER_BASE_REST_API_URL);
@@ -28,12 +29,14 @@ class UserService {
     }
 
     register(user){
+        console.log(user);
         return axios.post(USER_BASE_REST_API_URL + '/register', user, {withCredentials: true});
     }
 
     getProfile(){
         return axios.get(USER_BASE_REST_API_URL + '/getProfile', {withCredentials: true});
     }
+    
     logout(){
         return axios.post(USER_BASE_REST_API_URL + '/logout', {withCredentials: true});
     }

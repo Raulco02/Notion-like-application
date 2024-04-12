@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from "react";
-import TransferList from "./TransferList";
-import NoteServiceInstance from "../services/NoteService";
-import collectionServiceInstance from "../services/CollectionService";
 import UserServiceInstance from "../services/UserService";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
@@ -37,7 +34,7 @@ const UsersComponent = () => {
     };
 
     fetchUser();
-  }, []);
+  });
 
   const handleSubmit = () => {
     if(userId !== "new"){

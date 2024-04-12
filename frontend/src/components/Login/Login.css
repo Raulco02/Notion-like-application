@@ -60,15 +60,19 @@ input {
     margin-top: 20px;
 }
 
-.form-links a {
+.form-links p {
     display: block;
     margin-bottom: 10px;
     text-decoration: none;
     color: #007bff;
 }
 
-.form-links a:last-child {
+.form-links p:last-child {
     margin-bottom: 0;
+}
+
+.form-links p:hover {
+    cursor: pointer;
 }
 
 .login-button {

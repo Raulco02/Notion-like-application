@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
-import './Signup.css'; 
+import './Signup.css';
 import UserServiceInstance from '../../services/UserService';
 import { useNavigate } from 'react-router-dom';
+import { TextField } from '@mui/material';
+import { useForm } from 'react-hook-form';
 
 const Register = () => {
-    const [nombre, setNombre] = useState('');
-    const [correo, setCorreo] = useState('');
-    const [pwd1, setPwd1] = useState('');
-    const [pwd2, setPwd2] = useState('');
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [errorMessage, setErrorMessage] = useState('');
 
-    const handleSignup = async() => {
-            try {
-              await UserServiceInstance.register({ "userName": nombre, "email": correo, "pwd1": pwd1, "pwd2": pwd2 }); //Hay que comprobar que se haga bien
-              navigate('/');
-            } catch (error) {
-              console.error('Error al registrarse:', error);
-            }
-      };
+  const handleSignup = async (data) => {
+    console.log(data);
+    try {
+      await UserServiceInstance.register(data); //Hay que comprobar que se haga bien
+      navigate('/');
+    } catch (error) {
+      console.error('Error al registrarse:', error);
+      setErrorMessage('Error signing up');
+
+    }
+  };
 
   return (
     <div className="signup-container">
@@ -26,47 +29,35 @@ const Register = () => {
         <div className="avatar-container">
           <img className="avatar" src="/logo.webp" alt="Avatar-Smart-Esi" />
         </div>
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
+
+        <form style={{ display: 'flex', flexDirection: 'column' }} onSubmit={handleSubmit(handleSignup)}>
+
+          <TextField label='Username' id="userName" {...register("userName", { required: true })} >
+          </TextField>
+          {errors.userName && <span style={{ color: 'red' }}>The input cannot be empty</span>}
+
+          <TextField style={{ marginTop: '1rem' }} label='Email' id="email" {...register("email", { required: true })} >
+          </TextField>
+          {errors.email && <span style={{ color: 'red' }}>The input cannot be empty</span>}
+
+          <TextField style={{ marginTop: '1rem' }} type='password' label='Password' id="pwd1" {...register("pwd1", { required: true })} >
+          </TextField>
+          {errors.pwd1 && <span style={{ color: 'red' }}>The input cannot be empty</span>}
+
+          <TextField style={{ marginTop: '1rem' }} type='password' label='Repeat password' id="pwd2" {...register("pwd2", { required: true })} >
+          </TextField>
+          {errors.pwd2 && <span style={{ color: 'red' }}>The input cannot be empty</span>}
+
+          {errorMessage && <div style={{ backgroundColor: 'red', color: 'white', padding: '10px', borderRadius: '5px', marginTop: '2rem' }}>{errorMessage}</div>}
+
+          <button style={{ marginTop: '1rem' }} type='submit' className="signup-button" >Sign up</button>
+
+        </form>
+
+        <div className="form-links">
+          <p onClick={() => navigate('/')}>Are you already registered? Sign in</p>
         </div>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={pwd1}
-            onChange={(e) => setPwd1(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            value={pwd2}
-            onChange={(e) => setPwd2(e.target.value)}
-          />
-        </div>
-        <button className="signup-button" onClick={handleSignup}>Sign up</button>
+
       </div>
     </div>
   );

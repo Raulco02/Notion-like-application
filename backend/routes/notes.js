@@ -2,9 +2,9 @@ var express = require("express");
 var router = express.Router();
 const noteModel = require("../model/noteModel");
 const userModel = require("../model/userModel");
+const { parse } = require("dotenv");
 
 //¿Controlar que el usuario sea admin para según qué acciones?¿Añadir boolean admin a session?
-
 
 router.get("/", async function (req, res, next) {
   console.log("GET /notes")
@@ -23,7 +23,7 @@ router.get("/getById", async function (req, res, next) {
   }
 
   try {
-    
+
     const note = await noteModel.getNoteById(noteId);
 
     if (!note) {
@@ -31,7 +31,7 @@ router.get("/getById", async function (req, res, next) {
       res.status(404).json({ message: "Note not found" });
       return;
     }
-    if(req.session.user_id !== note.user_id){
+    if (req.session.user_id !== note.user_id) {
       res.status(403).json({
         message: "You are not allowed to see this note"
       });
@@ -40,7 +40,7 @@ router.get("/getById", async function (req, res, next) {
 
     // Devolver la nota encontrada
     res.status(200).json(note);
-    
+
   } catch (err) {
     console.error(`Error al buscar la nota por ID: ${err}`);
     res.status(500).send("Error interno del servidor");
@@ -49,14 +49,15 @@ router.get("/getById", async function (req, res, next) {
 
 router.get("/getUserNotes", async function (req, res, next) {
   const userId = req.session.user_id; // ID de la nota solicitada
+  var referencedNoteId = req.query.referencedNoteId;
+
   if (!userId) {
     res.status(401).json({ message: "User is not signed in" });
     return;
   }
-  console.log('user ID en getUserNotes:', userId);
 
   try {
-    userNotes = await noteModel.getUserNotes(userId);
+    userNotes = await noteModel.getUserNotes(userId, referencedNoteId);
 
     if (!userNotes) {
       // Si no se encuentra la nota, devolver un mensaje de error
@@ -67,23 +68,28 @@ router.get("/getUserNotes", async function (req, res, next) {
 
     // Devolver la nota encontrada
     res.status(200).json(userNotes);
-    
+
   } catch (err) {
     console.error(`Error al buscar las notas del usuario: ${err}`);
     res.status(500).send("Error interno del servidor");
   }
 });
+
 router.post("/create", async function (req, res, next) {
   var newNote = req.body;
+
   var userId = req.session.user_id;
-  var userId = req.session.user_id;
+
+
   if (!userId) {
     res.status(401).json({ message: "User is not signed in" });
     return;
   }
+
   newNote.user_id = userId;
-  if (!newNote || !newNote.title || !newNote.content) {
-    res.status(400).send("Title, content are required to create a new note");
+
+  if (!newNote || !newNote.title || !newNote.content || !newNote.referencedNoteId) {
+    res.status(400).send("Title, content, and Note Reference are required to create a new note");
     return;
   }
 
@@ -104,23 +110,23 @@ router.post("/create", async function (req, res, next) {
 });
 
 
-router.put("/:id/edit", async function (req, res, next) { 
+router.put("/:id/edit", async function (req, res, next) {
   var updatedNote = req.body;
   var noteId = req.params.id;
   // var findQuery = { _id: new ObjectId(noteId) };
   var updateQuery = { $set: req.body };
 
   if (
-     !updatedNote ||
-     !updatedNote.title ||
-     !updatedNote.content
+    !updatedNote ||
+    !updatedNote.title ||
+    !updatedNote.content
   ) {
     res
       .status(400)
       .send("Title and content are required to update a note");
     return;
   }
-  try{
+  try {
     const currentNote = await noteModel.getNoteById(noteId);
     if (!currentNote) {
       res.status(404).json({
@@ -128,7 +134,7 @@ router.put("/:id/edit", async function (req, res, next) {
       });
       return;
     }
-    if(req.session.user_id !== currentNote.user_id){
+    if (req.session.user_id !== currentNote.user_id) {
       console.log("Session user id:", req.session.user_id);
       console.log("note user id:", currentNote.user_id);
       res.status(403).json({
@@ -136,13 +142,13 @@ router.put("/:id/edit", async function (req, res, next) {
       });
       return;
     }
-  }catch (err) {
+  } catch (err) {
     console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
     res.status(500).send("Internal server error");
   }
-  try{
+  try {
     await noteModel.updateNoteById(noteId, updateQuery);
-    
+
     console.log('Document updated');
     res.status(200).json({
       message: "Note updated successfully"
@@ -155,7 +161,7 @@ router.put("/:id/edit", async function (req, res, next) {
 
 router.delete("/:id/delete", async function (req, res, next) {
   var noteId = req.params.id;
-  try{
+  try {
     const currentNote = await noteModel.getNoteById(noteId);
     if (!currentNote) {
       res.status(404).json({
@@ -163,17 +169,17 @@ router.delete("/:id/delete", async function (req, res, next) {
       });
       return;
     }
-    if(req.session.user_id !== currentNote.user_id){
+    if (req.session.user_id !== currentNote.user_id) {
       res.status(403).json({
         message: "You are not allowed to delete this note"
       });
       return;
     }
-  }catch (err) {
+  } catch (err) {
     console.error(`Something went wrong trying to get one document to delete it: ${err}\n`);
     res.status(500).send("Internal server error");
   }
-  try{
+  try {
     // const db = await database.connectToServer();
     // db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
     await noteModel.deleteNoteById(noteId);
@@ -181,7 +187,7 @@ router.delete("/:id/delete", async function (req, res, next) {
     res.status(200).json({
       message: "Note deleted successfully"
     });
-  }catch (err) {
+  } catch (err) {
     console.error(`Something went wrong trying to delete a document: ${err}\n`);
     res.status(500).send("Internal server error");
   }

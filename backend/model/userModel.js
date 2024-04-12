@@ -8,38 +8,51 @@ class userModel {
         const db = await database.connectToServer();
         const users = db.collection("Users").find({});
         return await users.toArray();
-      }
-      async getUserById(userId) {
+    }
+
+    async getUserById(userId) {
         const db = await database.connectToServer();
         return await db.collection("Users").findOne({ _id: new ObjectId(userId) });
     }
+
     async createNewUser(newUser) {
         const db = await database.connectToServer();
+
+        // Comprobar si el correo electrónico ya está en uso
+        const existingUser = await db.collection("Users").findOne({ email: newUser.email });
+        if (existingUser) {
+            throw new Error("Email already in use");
+        }
+
         const result = await db.collection("Users").insertOne(newUser);
         return result.insertedId;
     }
+
+
     async updateUserById(userId, updateQuery) {
         var findQuery = { _id: new ObjectId(userId) };
 
         const updateOptions = { returnOriginal: false };
         const db = await database.connectToServer();
         const updateResult = db.collection("Users").findOneAndUpdate(
-          findQuery,
-          updateQuery,
-          updateOptions,
+            findQuery,
+            updateQuery,
+            updateOptions,
         );
 
         return updateResult
     }
+
     async deleteUserById(userId) {
         const db = await database.connectToServer();
         return await db.collection("Users").deleteOne({ _id: new ObjectId(userId) });
     }
-    async login(email, password){
+
+    async login(email, password) {
         const db = await database.connectToServer();
         const user = await db.collection("Users").findOne({ email: email });
         password = crypto.createHash('sha256').update(password).digest('hex');
-        if(user.password === password){
+        if (user.password === password) {
             return user;
         }
     }

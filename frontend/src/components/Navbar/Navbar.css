@@ -2,7 +2,7 @@
     background-color: #1c2229;
     color: white;
     display: flex;
-    justify-content: space-between; /* Coloca los elementos a los lados */
+    justify-content: flex-end; /* Coloca los elementos a los lados */
     padding: 10px 20px; /* Ajusta el espacio alrededor de los elementos */
   }
   
@@ -16,4 +16,8 @@
   
   .navbar-button:hover {
     background-color: rgba(255, 255, 255, 0.1); /* Cambia el color de fondo al pasar el mouse */
+  }
+
+  .navbar-right {
+    margin-right: 3rem;
   }

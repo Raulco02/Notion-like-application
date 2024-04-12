@@ -101,15 +101,15 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
       <nav className='note-menu'>
         <ul>
           <li onClick={saveClick}>
-            Guardar
+            Save
           </li>
           <li onClick={cancelClick}>
-            Cancelar
+            Cancel
           </li>
         </ul>
         <ul>
           <li onClick={deleteClick}>
-            Eliminar
+            Delete
           </li>
         </ul>
       </nav>
@@ -137,7 +137,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
         theme="snow"
         modules={modules}
         formats={formats}
-        placeholder="Escribe lo que quieras ...."
+        placeholder="Write something..."
         onChange={handleProcedureContentChange}
       />
     </div>

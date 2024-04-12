@@ -82,10 +82,7 @@ router.post("/register", async function (req, res, next) { //No comprueba que no
     if (!userName || !email || !pwd1 || !pwd2) {
       return res.status(400).json({ error: "Username, email, password and confirmation are required" });
     }
-    // Verificar correo...
-    if (pwd1.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters long" });
-    }
+
     if (pwd1 !== pwd2) {
       return res.status(400).json({ error: "Passwords do not match" });
     }
@@ -101,7 +98,7 @@ router.post("/register", async function (req, res, next) { //No comprueba que no
 });
 
 router.post('/logout', (req, res) => {
-  console.log("Session before logout:", session);
+  // console.log("Session before logout:", session);
   req.session.destroy(err => {
     if (err) {
       console.error('Error al cerrar sesión:', err);
@@ -110,7 +107,7 @@ router.post('/logout', (req, res) => {
     // Envía una respuesta exitosa
     res.status(200).json({ message: 'Logout exitoso' });
   });
-  console.log("Session after logout:", session);
+
 });
 
 
