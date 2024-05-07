@@ -57,20 +57,19 @@ class userModel {
         }
     }
 
-    async createFriendshipRequest(senderId, receiverId) {
+    async createFriendshipRequest(senderId, receiverEmail) {
         const db = await database.connectToServer();
         const usersCollection = db.collection("Users");
 
         const senderUserId = new ObjectId(senderId);
         const sender = await usersCollection.findOne({ _id: senderUserId });
-        if (sender.friend_requests && sender.friend_requests.includes(receiverId)) {
-            throw new Error("User already sent a request");
-        }
-
-        const userId = new ObjectId(receiverId);
-        // Buscar el usuario por su ID y verificar si tiene el campo "friend_requests"
-        const user = await usersCollection.findOne({ _id: userId });
-        if (user) {
+        const user = await usersCollection.findOne({ email: receiverEmail });
+        if(user){
+            const userId = user._id;
+            const userIdString = user._id.toString();
+            if (sender.friend_requests && sender.friend_requests.includes(userIdString)) {
+                throw new Error("User already sent a request");
+            }
             if (user.friend_requests) {
                 if (user.friend_requests.includes(senderId)) {
                     throw new Error("User already has a request from this sender");
@@ -91,8 +90,9 @@ class userModel {
             // Manejar el caso en que el usuario no se encuentre
             throw new Error("User not found");
         }
+
     
-        return receiverId;
+        return true;
     }
 
     async getFriendshipRequests(userId) {

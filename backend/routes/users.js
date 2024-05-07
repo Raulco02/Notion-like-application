@@ -142,7 +142,7 @@ router.get("/getById", async function (req, res, next) {
   }
 });
 
-router.post("/create", async function (req, res, next) {
+router.post("/create", async function (req, res, next) { 
   var newUser = req.body;
 
   if (!newUser || !newUser.userName || !newUser.email || !newUser.password) {
@@ -237,15 +237,15 @@ router.post("/friendship_request", async function (req, res, next) {
   var user = req.body;
   if (
     !user ||
-    !user.requestedUserId
+    !user.requestedUserEmail
  ) {
    res
      .status(400)
-     .send("requestedUserID is required to create a friendship request");
+     .send("requestedUserEmail is required to create a friendship request");
    return;
  }
   try{
-    await userModel.createFriendshipRequest(user_id, user.requestedUserId);
+    await userModel.createFriendshipRequest(user_id, user.requestedUserEmail);
     console.log("Friendship request created successfully");
     res.status(200).json({
       message: "Friendship request created successfully"
