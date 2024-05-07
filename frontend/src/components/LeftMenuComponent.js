@@ -40,14 +40,11 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
         }}
 
       />
-
-
     );
   });
 
   // Para listar las notas
   useEffect(() => {
-    
     updateNotes();
   }, [reloadNotes]); // Agrega reloadNotes como una dependencia en useEffect
 
