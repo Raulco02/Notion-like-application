@@ -56,6 +56,141 @@ class userModel {
             return user;
         }
     }
+
+    async createFriendshipRequest(senderId, receiverEmail) {
+        const db = await database.connectToServer();
+        const usersCollection = db.collection("Users");
+
+        const senderUserId = new ObjectId(senderId);
+        const sender = await usersCollection.findOne({ _id: senderUserId });
+        const user = await usersCollection.findOne({ email: receiverEmail });
+        if(user){
+            const userId = user._id;
+            const userIdString = user._id.toString();
+            if (sender.friend_requests && sender.friend_requests.includes(userIdString)) {
+                throw new Error("User already sent a request");
+            }
+            if (user.friend_requests) {
+                if (user.friend_requests.includes(senderId)) {
+                    throw new Error("User already has a request from this sender");
+                }
+                // Si el campo "friend_requests" existe, agregamos el receiverId a la lista
+                await usersCollection.updateOne(
+                    { _id: userId },
+                    { $addToSet: { friend_requests: senderId } }
+                );
+            } else {
+                // Si el campo "friend_requests" no existe, lo creamos como una lista con receiverId
+                await usersCollection.updateOne(
+                    { _id: userId },
+                    { $set: { friend_requests: [senderId] } }
+                );
+            }
+        } else {
+            // Manejar el caso en que el usuario no se encuentre
+            throw new Error("User not found");
+        }
+
+    
+        return true;
+    }
+
+    async getFriendshipRequests(userId) {
+        const db = await database.connectToServer();
+        const usersCollection = db.collection("Users");
+        const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+        console.log(user)
+        console.log(user.friend_requests)
+        if (user.friend_requests) {
+            // Convertir los IDs de friend_requests a ObjectId
+            const friendRequestIds = user.friend_requests.map(id => new ObjectId(id));
+            // Utilizar los IDs convertidos en la consulta
+            const friendRequests = await usersCollection.find(
+                { _id: { $in: friendRequestIds } },
+                { projection: { _id: 1, userName: 1, email: 1 } }
+            ).toArray();
+            console.log(friendRequests);
+            return friendRequests;
+        }
+        return [];
+    }
+
+    async setFriendshipRequest(userId, friendId, status) {
+        const db = await database.connectToServer();
+        const usersCollection = db.collection("Users");
+
+        const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+        if (!user.friend_requests || !user.friend_requests.includes(friendId)) {
+            throw new Error("Friend request not found");
+        }
+
+        if (status === "true") {
+            // Agregar a la lista de amigos del usuario
+            await usersCollection.updateOne(
+                { _id: new ObjectId(userId) },
+                { $addToSet: { friends: friendId } }
+            );
+            // Agregar a la lista de amigos del amigo
+            await usersCollection.updateOne(
+                { _id: new ObjectId(friendId) },
+                { $addToSet: { friends: userId } }
+            );
+        }
+        await usersCollection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $pull: { friend_requests: friendId } }
+        );
+
+        return friendId;
+    }
+
+    async getFriends(userId) {
+        const db = await database.connectToServer();
+        const usersCollection = db.collection("Users");
+        const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+        if (user.friends) {
+            const friendIds = user.friends.map(id => new ObjectId(id));
+            const friends = await usersCollection.find(
+                { _id: { $in: friendIds } },
+                { projection: { _id: 1, userName: 1, email: 1 } }
+            ).toArray();
+            return friends;
+        }
+        return [];
+    }
+
+    async deleteFriend(userId, friendId) {
+        const db = await database.connectToServer();
+        const usersCollection = db.collection("Users");
+    
+        const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+        const friend = await usersCollection.findOne({ _id: new ObjectId(friendId) });
+    
+        if (!user || !friend) {
+            throw new Error("Friend not found");
+        }
+    
+        // Verificar si el amigo está presente en la lista de amigos
+        if (!user.friends.includes(friendId) || !friend.friends.includes(userId)) {
+            throw new Error("User is not a friend");
+        }
+    
+        // Eliminar al amigo de la lista de amigos del usuario
+        await usersCollection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $pull: { friends: friendId } }
+        );
+    
+        // Eliminar al usuario de la lista de amigos del amigo
+        await usersCollection.updateOne(
+            { _id: new ObjectId(friendId) },
+            { $pull: { friends: userId } }
+        );
+    
+        return friendId;
+    }
+    
+    
 }
 
 module.exports = new userModel();
