@@ -3,6 +3,8 @@ import './Navbar.css'; // Importa el archivo CSS para aplicar estilos al navbar
 import { useNavigate } from 'react-router-dom'; // Importa el hook useNavigate para redirigir a otras páginas
 import UserServiceInstance from '../../services/UserService'; // Importa el servicio UserService para hacer logout
 import ModalFriendships from './ModalFiendships/ModalFriendships'; // Importa el componente ModalFriendships
+import FriendShipServiceInstance from '../../services/FriendShipService';
+
 function Navbar({ isAdmin }) {
   const navigate = useNavigate(); // Inicializa el hook useNavigate
   const [isModalFriendsOpen, setIsModalFriendsOpen] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
@@ -24,7 +26,7 @@ function Navbar({ isAdmin }) {
   }, []);
 
 
-  const getfriends = () => {
+  const getfriends = async () => {
 
     const friends = {
       "friends": [
@@ -70,6 +72,8 @@ function Navbar({ isAdmin }) {
         }
       ]
     };
+    
+    //const friends = await FriendShipServiceInstance.getUserFriends();
 
     setFriends(friends.friends);
 
