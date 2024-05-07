@@ -39,6 +39,9 @@ router.put("/login", async function (req, res, next) { //REVISAR
 
     return res.status(200).json({ "httpId": httpId });
   } catch (err) {
+    if (err.message === "User not found") {
+      return res.status(404).json({ error: "User not found" });
+    }
     console.error(`Error signing in: ${err}`);
     return res.status(500).json({ error: "Internal server error" });
   }
@@ -210,6 +213,235 @@ router.delete("/delete", async function (req, res, next) {
   }catch (err) {
     console.error(`Something went wrong trying to delete a document: ${err}\n`);
     res.status(500).send("Internal server error");
+  }
+});
+
+router.post("/friendship_request", async function (req, res, next) {
+  const session = req.session;
+  const registered = session.register;
+
+  console.log("Session: ", session);
+  console.log("Registered: ", registered);
+  console.log("User ID: ", session.user_id);
+
+  if (!registered) {
+    return res.status(404).json({ error: "User does not have a session or is not signed up" });
+  }
+
+  const user_id = session.user_id;
+
+  if (!user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+
+  var user = req.body;
+  if (
+    !user ||
+    !user.requestedUserId
+ ) {
+   res
+     .status(400)
+     .send("requestedUserID is required to create a friendship request");
+   return;
+ }
+  try{
+    await userModel.createFriendshipRequest(user_id, user.requestedUserId);
+    console.log("Friendship request created successfully");
+    res.status(200).json({
+      message: "Friendship request created successfully"
+    });
+  }catch (err) {
+    if(err.message === "User already sent a request"){
+      res.status(400).send("User already sent a request");
+      return;
+    }
+    else if (err.message === "User not found"){
+      res.status(404).send("User not found");
+      return;
+    }
+    else if (err.message === "User already has a request from this sender"){
+      res.status(400).send("User already has a request from this sender");
+      return;
+    }
+    else if (err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).send("Invalid requestedUserId");
+      return;
+    }
+    else{
+      console.error(`Something went wrong trying to create a friendship request: ${err}\n`);
+      res.status(500).send("Internal server error");
+    }
+  }
+});
+
+router.get("/get_friendship_requests", async function (req, res, next) {
+  const session = req.session;
+  const registered = session.register;
+
+  console.log("Session: ", session);
+  console.log("Registered: ", registered);
+  console.log("User ID: ", session.user_id);
+
+  if (!registered) {
+    return res.status(404).json({ error: "User does not have a session or is not signed up" });
+  }
+
+  const user_id = session.user_id;
+
+  if (!user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+
+  try{
+    const requests = await userModel.getFriendshipRequests(user_id);
+    console.log("Friendship requests obtained successfully");
+    res.status(200).json({
+      message: "Friendship requests obtained successfully",
+      requests: requests
+    });
+  }catch (err) {
+    console.error(`Something went wrong trying to get friendship requests: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+});
+
+router.post("/set_friendship_request", async function (req, res, next) {
+  const session = req.session;
+  const registered = session.register;
+
+  console.log("Session: ", session);
+  console.log("Registered: ", registered);
+  console.log("User ID: ", session.user_id);
+
+  if (!registered) {
+    return res.status(404).json({ error: "User does not have a session or is not signed up" });
+  }
+
+  const user_id = session.user_id;
+
+  if (!user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+
+  var user = req.body;
+  if (
+    !user ||
+    !user.userId ||
+    !user.accepted
+  ){
+    res
+      .status(400)
+      .send("userId and accepted are required to set a friendship request");
+    return;
+  }
+  if(user.accepted !== 'true' && user.accepted !== 'false'){
+    res.status(400).send("Accepted must be true o false");
+    return;
+  }
+  try{
+    await userModel.setFriendshipRequest(user_id, user.userId, user.accepted);
+    console.log("Friendship request set successfully");
+    res.status(200).json({
+      message: "Friendship request set successfully"
+    });
+  }catch (err) {
+    if(err.message === "Friend request not found"){
+      res.status(404).send("Friend request not found");
+      return;
+    }
+    else if (err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).send("Invalid userId");
+      return;
+    }
+    else{
+      console.error(`Something went wrong trying to set a friendship request: ${err}\n`);
+      res.status(500).send("Internal server error");
+    }
+  }
+});
+
+router.get("/get_friends", async function (req, res, next) {
+  const session = req.session;
+  const registered = session.register;
+
+  console.log("Session: ", session);
+  console.log("Registered: ", registered);
+  console.log("User ID: ", session.user_id);
+
+  if (!registered) {
+    return res.status(404).json({ error: "User does not have a session or is not signed up" });
+  }
+
+  const user_id = session.user_id;
+
+  if (!user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+
+  try{
+    const friends = await userModel.getFriends(user_id);
+    console.log("Friends obtained successfully");
+    res.status(200).json({
+      message: "Friends obtained successfully",
+      friends: friends
+    });
+  }catch (err) {
+    console.error(`Something went wrong trying to get friends: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+});
+
+router.delete("/delete_friend", async function (req, res, next) {
+  const session = req.session;
+  const registered = session.register;
+
+  console.log("Session: ", session);
+  console.log("Registered: ", registered);
+  console.log("User ID: ", session.user_id);
+
+  if (!registered) {
+    return res.status(404).json({ error: "User does not have a session or is not signed up" });
+  }
+
+  const user_id = session.user_id;
+
+  if (!user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+
+  var user = req.body;
+  if (
+    !user ||
+    !user.userId
+ ) {
+   res
+     .status(400)
+     .send("userId is required to delete a friend");
+   return;
+ }
+  try{
+    await userModel.deleteFriend(user_id, user.userId);
+    console.log("Friend deleted successfully");
+    res.status(200).json({
+      message: "Friend deleted successfully"
+    });
+  }catch (err) {
+    if(err.message === "Friend not found"){
+      res.status(404).send("Friend not found");
+      return;
+    }
+    else if(err.message === "User is not a friend"){
+      res.status(404).send("User is not a friend");
+      return;
+    }
+    else if (err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).send("Invalid userId");
+      return;
+    }
+    else{
+      console.error(`Something went wrong trying to delete a friend: ${err}\n`);
+      res.status(500).send("Internal server error");
+    }
   }
 });
 

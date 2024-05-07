@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Habilita CORS
 app.use(cors({
-  origin: 'http://localhost:3002',
+  origin: 'http://localhost:3001',
   credentials: true
 }));
 
