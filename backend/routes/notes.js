@@ -279,4 +279,43 @@ router.get("/getAccessUser/:id", async function (req, res, next) {
   }
 });
 
+router.get("/getSharedNotes/:ownerId", async function (req, res, next) {
+  const userId = req.session.user_id;
+  const ownerId = req.params.ownerId;
+
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+
+  try {
+    const sharedNotes = await noteModel.getSharedNotes(ownerId, userId, userModel.checkFriendship);
+
+    // Devolver la nota encontrada
+    res.status(200).json(sharedNotes);
+
+  } catch (err) {
+    if(err.message === "User is not friend of the owner"){
+      res.status(403).json({
+        message: "User is not friend of the owner"
+      });
+    }
+    else if (err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer") {
+      res.status(400).json({
+        message: "Invalid owner ID"
+      });
+    }
+    else if (err.message === "User not found") {
+      res.status(404).json({
+        message: "User not found"
+      });
+    
+    }
+    else{
+      console.error(`Error al buscar las notas del usuario: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
+  }
+});
+
 module.exports = router;

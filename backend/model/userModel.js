@@ -200,6 +200,9 @@ class userModel {
         const db = await database.connectToServer();
         const usersCollection = db.collection("Users");
         const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+        if (!user) {
+            throw new Error("User not found");
+        }
         if (!user.friends || !user.friends.includes(friendId)) {
             return false;
         }

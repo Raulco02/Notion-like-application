@@ -264,6 +264,18 @@ class noteModel {
         }
         return "n";
     }
+    async getSharedNotes(ownerId, userId, checkFriendship){
+        const areFriends = await checkFriendship(ownerId, userId);
+        if (!areFriends) {
+            throw new Error("User is not friend of the owner");
+        }
+        const db = await database.connectToServer();
+
+        const readerNotes = await db.collection("Notes").find({ user_id: ownerId, readers: { $in: [userId] } }).toArray();
+        const writerNotes = await db.collection("Notes").find({ user_id: ownerId, editors: { $in: [userId] } }).toArray();
+        const notes = { "readerNotes": readerNotes, "editorNotes": writerNotes };
+        return notes;
+    }
 }
 
 module.exports = new noteModel();
