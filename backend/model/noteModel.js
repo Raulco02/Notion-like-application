@@ -247,6 +247,23 @@ class noteModel {
             }
         });
     }
+    async getAccessUser(noteId, userId){
+        const db = await database.connectToServer();
+        const note = await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
+        if (!note) {
+            throw new Error("Note not found");
+        }
+        if (note.user_id === userId) {
+            return "o";
+        }
+        if (note.readers && note.readers.includes(userId)) {
+            return "r";
+        }
+        if (note.editors && note.editors.includes(userId)) {
+            return "w";
+        }
+        return "n";
+    }
 }
 
 module.exports = new noteModel();

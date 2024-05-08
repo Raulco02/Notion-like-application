@@ -3,6 +3,7 @@ var router = express.Router();
 const noteModel = require("../model/noteModel");
 const userModel = require("../model/userModel");
 const { parse } = require("dotenv");
+const e = require("express");
 
 //¿Controlar que el usuario sea admin para según qué acciones?¿Añadir boolean admin a session?
 
@@ -249,6 +250,33 @@ router.post("/setSharing", async function (req, res, next) {
     res.status(500).send("Internal server error");
   }
  }
+});
+
+router.get("/getAccessUser/:id", async function (req, res, next) {
+  const noteId = req.params.id;
+  const userId = req.session.user_id;
+
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+
+  try {
+    const access = await noteModel.getAccessUser(noteId, userId);
+
+    // Devolver la nota encontrada
+    res.status(200).json({"access_mode:": access});
+
+  } catch (err) {
+    if(err.message === "Note not found"){
+      res.status(404).json({
+        message: "Note not found"
+      });
+    } else{
+      console.error(`Error al buscar las notas del usuario: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
+  }
 });
 
 module.exports = router;
