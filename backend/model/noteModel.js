@@ -118,11 +118,135 @@ class noteModel {
         return rootNotes;
     }
     
-    
-    
-    
-    
+    async setSharing(noteId, userId, ownerId, accessMode, checkFriendship){
+        const areFriends = await checkFriendship(ownerId, userId);
+        console.log("Somo amigo?", areFriends)
+        if (!areFriends) {
+            throw new Error("User is not friend of the owner");
+        }
+        const db = await database.connectToServer();
+        console.log("ownerId", ownerId);
+        console.log("noteId", new ObjectId(noteId));
+        const objectNoteId = new ObjectId(noteId);
+        let updateQuery = {};
+        // Determinar qué acción tomar según el valor de access_mode
+        if (accessMode === "r") {
+            // Si access_mode es "r", agregar userId a readers
+            updateQuery = { $addToSet: { readers: userId } };
+        } else if (accessMode === "w") {
+            // Si access_mode es "w", agregar userId a editors
+            updateQuery = { $addToSet: { editors: userId } };
+        } else if (accessMode === "n") {
+            // Si access_mode es "n", eliminar userId de readers y editors
+            updateQuery = { $pull: { readers: userId, editors: userId } };
+        }
+        
+        // Realizar la actualización
+        const updateResult = await db.collection("Notes").findOneAndUpdate(
+            { 
+                _id: objectNoteId,
+                user_id: ownerId 
+            },
+            updateQuery,
+            { 
+                returnOriginal: false 
+            }
+        );
+        if (!updateResult) {
+            throw new Error("Note not found");
+        }
+        const subNotes = await db.collection("Notes").find({
+            user_id: ownerId,
+            referencedNoteId: objectNoteId
+        }).toArray();
+        // Actualizar las subnotas, si existen
+        if (subNotes.length > 0) {
+            const subNotesUpdateResult = await db.collection("Notes").updateMany(
+                { 
+                    user_id: ownerId,
+                    referencedNoteId: objectNoteId 
+                },
+                updateQuery
+            );
 
+            console.log("Number of subnotes updated:", subNotesUpdateResult.modifiedCount);
+        }
+        // const updatedNote = updateResult;
+        // console.log(updatedNote);
+        // updatedNote.subNotes = subNotes;
+        // console.log("Con subnotas Updated note:", updatedNote);
+    }
+    //When you delete a friendship, you must delete the sharing of the notes that the user has shared with the friend
+    async setSharingDeletedFriend(userId, friendId){
+        const db = await database.connectToServer();
+        const notes = await db.collection("Notes").find({ user_id: userId }).toArray();
+        notes.forEach(async note => {
+            if (note.readers && note.readers.includes(friendId)) {
+                const updateQuery = { $pull: { readers: friendId } };
+                const updateResult = await db.collection("Notes").findOneAndUpdate(
+                    { 
+                        _id: note._id,
+                        user_id: userId 
+                    },
+                    updateQuery,
+                    { 
+                        returnOriginal: false 
+                    }
+                );
+                if (!updateResult) {
+                    throw new Error("Note not found");
+                }
+                const subNotes = await db.collection("Notes").find({
+                    user_id: userId,
+                    referencedNoteId: note._id
+                }).toArray();
+                // Actualizar las subnotas, si existen
+                if (subNotes.length > 0) {
+                    const subNotesUpdateResult = await db.collection("Notes").updateMany(
+                        { 
+                            user_id: userId,
+                            referencedNoteId: note._id 
+                        },
+                        updateQuery
+                    );
+        
+                    console.log("Number of subnotes updated:", subNotesUpdateResult.modifiedCount);
+                }
+            }
+            if (note.editors && note.editors.includes(friendId)) {
+                const updateQuery = { $pull: { editors: friendId } };
+                const updateResult = await db.collection("Notes").findOneAndUpdate(
+                    { 
+                        _id: note._id,
+                        user_id: userId 
+                    },
+                    updateQuery,
+                    { 
+                        returnOriginal: false 
+                    }
+                );
+                if (!updateResult) {
+                    throw new Error("Note not found");
+                }
+                const subNotes = await db.collection("Notes").find({
+                    user_id: userId,
+                    referencedNoteId: note._id
+                }).toArray();
+                // Actualizar las subnotas, si existen
+                if (subNotes.length > 0) {
+                    const subNotesUpdateResult = await db.collection("Notes").updateMany(
+                        { 
+                            user_id: userId,
+                            referencedNoteId: note._id 
+                        },
+                        updateQuery
+                    );
+        
+                    console.log("Number of subnotes updated:", subNotesUpdateResult.modifiedCount);
+                }
+            }
+        });
+    }
 }
 
 module.exports = new noteModel();

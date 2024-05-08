@@ -193,4 +193,62 @@ router.delete("/:id/delete", async function (req, res, next) {
   }
 });
 
+router.post("/setSharing", async function (req, res, next) {
+  const session = req.session;
+  const registered = session.register;
+
+  console.log("Session: ", session);
+  console.log("Registered: ", registered);
+  console.log("User ID: ", session.user_id);
+
+  if (!registered) {
+    return res.status(404).json({ error: "User does not have a session or is not signed up" });
+  }
+
+  const user_id = session.user_id;
+
+  if (!user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+
+  var request = req.body;
+  if (
+    !request ||
+    !request.userId ||
+    !request.noteId ||
+    !request.accessMode
+ ) {
+   res
+     .status(400)
+     .send("userId, noteId and accessMode are required to share a note");
+   return;
+ }
+ if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
+    res
+      .status(400)
+      .send("accessMode must be 'r', 'w' or 'n'");
+    return;
+ }
+ try{
+  await noteModel.setSharing(request.noteId, request.userId, user_id, request.accessMode, userModel.checkFriendship);
+  res.status(200).json({
+    message: "Note shared successfully"
+  });
+ }catch(err){
+  if(err.message === "Note not found"){
+    res.status(404).json({
+      message: "Note not found"
+    });
+  } else if(err.message === "User is not friend of the owner"){
+    res.status(403).json({
+      message: "User is not friend of the owner"
+    });
+  }
+  else{
+    console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+ }
+});
+
 module.exports = router;

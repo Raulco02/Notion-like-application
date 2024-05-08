@@ -1,6 +1,7 @@
 var database = require("../db/Agent");
 const { ObjectId } = require('mongodb');
 var crypto = require('crypto');
+const { setSharingDeletedFriend } = require("./noteModel");
 
 
 class userModel {
@@ -189,8 +190,20 @@ class userModel {
             { _id: new ObjectId(friendId) },
             { $pull: { friends: userId } }
         );
+
+        await setSharingDeletedFriend(userId, friendId);
     
         return friendId;
+    }
+
+    async checkFriendship(userId, friendId) {
+        const db = await database.connectToServer();
+        const usersCollection = db.collection("Users");
+        const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+        if (!user.friends || !user.friends.includes(friendId)) {
+            return false;
+        }
+        return true;
     }
     
     
