@@ -263,6 +263,10 @@ router.post("/friendship_request", async function (req, res, next) {
       res.status(400).send("User already has a request from this sender");
       return;
     }
+    else if (err.message === "You cannot send a friend request to yourself"){
+      res.status(400).send("You cannot send a friend request to yourself");
+      return;
+    }
     else if (err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
       res.status(400).send("Invalid requestedUserId");
       return;
@@ -274,7 +278,7 @@ router.post("/friendship_request", async function (req, res, next) {
   }
 });
 
-router.get("/get_friendship_requests", async function (req, res, next) {
+router.get("/get_friendship_requests", async function (req, res, next) { //Devolver variable true o false de nota compartida
   const session = req.session;
   const registered = session.register;
 

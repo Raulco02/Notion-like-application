@@ -70,6 +70,9 @@ class userModel {
             if (sender.friend_requests && sender.friend_requests.includes(userIdString)) {
                 throw new Error("User already sent a request");
             }
+            if (senderId === userIdString) {
+                throw new Error("You cannot send a friend request to yourself");
+            }
             if (user.friend_requests) {
                 if (user.friend_requests.includes(senderId)) {
                     throw new Error("User already has a request from this sender");
