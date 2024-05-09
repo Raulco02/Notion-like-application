@@ -61,7 +61,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
 
   const saveClick = async () => {
     console.log(content);
-    
+
     const updatedNote = {
       title: title,
       content: content
@@ -101,15 +101,20 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
       <nav className='note-menu'>
         <ul>
           <li onClick={saveClick}>
-            Save
+            <img alt='Save' src='/floppy-disk.png' height="25px"></img>
           </li>
           <li onClick={cancelClick}>
-            Cancel
+            <img alt='Cancel' src='/cancel.png' height="25px"></img>
           </li>
+
+          <li onClick={cancelClick}>
+            <img alt='Share' src='/share.png' height="25px"></img>
+          </li>
+
         </ul>
         <ul>
           <li onClick={deleteClick}>
-            Delete
+            <img alt='Delete' src='/delete.png' height="25px"></img>
           </li>
         </ul>
       </nav>
