@@ -4,10 +4,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useNavigate } from 'react-router-dom';
 import NoteServiceInstance from '../services/NoteService';
-// import ImageResize from 'quill-image-resize-module-react';
-
-// window.Quill = Quill
-// Quill.register('modules/imageResize', ImageResize);
+import ModalShare from './ModalShare/ModalShare';
 
 const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
 
@@ -16,6 +13,9 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
   const [title, setTitle] = useState(noteSelected.title);
   const [content, setContent] = useState(noteSelected.content);
   const [editingTitle, setEditingTitle] = useState(false);
+
+  const [isModalShareOpen, setIsModalShareOpen] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
+
 
   useEffect(() => {
     setContent(noteSelected.content);
@@ -28,6 +28,10 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
 
   const handleTitleChange = (event) => {
     setTitle(event.target.value);
+  };
+
+  const handleCloseModalShare = () => {
+    setIsModalShareOpen(false);
   };
 
   const handleTitleBlur = () => {
@@ -71,6 +75,11 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
       const response = await NoteServiceInstance.updateNoteById(noteSelected._id, updatedNote);
       console.log('La nota se actualizó correctamente:', response.data);
       setReloadNotes(!reloadNotes);
+
+      //actualizamos nota
+      noteSelected.title = title;
+      noteSelected.content = content;
+      
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
     }
@@ -87,13 +96,21 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
     }
   };
 
-  const cancelClick = async () => {
+  const cancelClick = () => {
     setContent(noteSelected.content);
     setTitle(noteSelected.title);
   };
 
   const handleProcedureContentChange = (newContent) => {
     setContent(newContent);
+  };
+
+  const shareClick = () => {
+    setIsModalShareOpen(true);
+
+    if (isModalShareOpen) {
+      setIsModalShareOpen(false);
+    }
   };
 
   return (
@@ -107,9 +124,19 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
             <img alt='Cancel' src='/cancel.png' height="25px"></img>
           </li>
 
-          <li onClick={cancelClick}>
-            <img alt='Share' src='/share.png' height="25px"></img>
-          </li>
+          <div className='share-container'>
+            <li onClick={shareClick}>
+              <img alt='Share' src='/share.png' height="25px"></img>
+            </li>
+
+            {/* modal amigos */}
+            {isModalShareOpen && (
+              <ModalShare
+                handleCloseModalShare={handleCloseModalShare}
+                note={noteSelected}
+              />
+            )}
+          </div>
 
         </ul>
         <ul>

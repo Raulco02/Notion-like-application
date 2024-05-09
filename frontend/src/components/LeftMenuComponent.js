@@ -151,7 +151,7 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
 
           <li className='clickable'>
             <span onClick={nuevaNotaClick} style={{ display:'flex', flexDirection:'row' }}>
-              <img alt='+' src='/sticky-note.png' height="35px" style={{ marginRight:'0.5rem' }} />
+              <img alt='+' src='/sticky-note.png' height="30px" style={{ marginRight:'0.5rem' }} />
               <div style={{ display:'flex', alignItems:'center' }}>
                 New note
               </div>
@@ -160,7 +160,7 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
 
           <li className='clickable'>
             <span onClick={nuevaSubNotaClick} style={{ display:'flex', flexDirection:'row' }}>
-              <img alt='+' src='/notes.png' height="35px" style={{ marginRight:'0.5rem' }}/>
+              <img alt='+' src='/notes.png' height="30px" style={{ marginRight:'0.5rem' }}/>
               <div style={{ display:'flex', alignItems:'center' }}>
                 New subnote
               </div>

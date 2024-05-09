@@ -32,6 +32,10 @@ function Navbar({ isAdmin }) {
     setIsModalNotificationsOpen(false);
     setIsModalFriendsOpen(true);
 
+    if(isModalFriendsOpen){
+      setIsModalFriendsOpen(false);
+    }
+
   }
 
   const handleCloseModalFriends = () => {
@@ -41,6 +45,10 @@ function Navbar({ isAdmin }) {
   const handleOpenModalNotifications = () => {
     setIsModalFriendsOpen(false);
     setIsModalNotificationsOpen(true);
+
+    if(isModalNotificationsOpen){
+      setIsModalNotificationsOpen(false);
+    }
   }
 
   const handleCloseModalNotifications = () => {
