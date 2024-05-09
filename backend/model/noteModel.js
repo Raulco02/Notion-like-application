@@ -337,7 +337,35 @@ class noteModel {
         return rootNotes;
     }
     
-    
+    async sharingRequest(userId, noteId, access_mode, checkFriendship, createNotification){
+        const db = await database.connectToServer();
+
+        const note = await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
+        if (!note) {
+            throw new Error("Note not found");
+        }
+
+        const ownerId = note.user_id;
+        const areFriends = await checkFriendship(ownerId, userId);
+        if (!areFriends) {
+            throw new Error("User is not friend of the owner");
+        }
+        // Verificar si el usuario ya tiene permisos para la nota
+        const userAccess = await this.getAccessUser(noteId, userId);
+        if (userAccess === access_mode) {
+            throw new Error("User already has the requested access mode");
+        }
+        const notificationData = {
+            type: "s",
+            sender_id: userId,
+            receiver_id: ownerId,
+            note_id: noteId,
+            access_mode: access_mode
+        };
+        
+        const notification = await createNotification(notificationData);
+        return notification;
+    }
     
 
 }

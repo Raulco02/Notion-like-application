@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 const noteModel = require("../model/noteModel");
 const userModel = require("../model/userModel");
+const notificationModel = require("../model/notificationModel");
 const { parse } = require("dotenv");
 const e = require("express");
 
@@ -316,6 +317,65 @@ router.get("/getSharedNotes/:ownerId", async function (req, res, next) {
       res.status(500).send("Error interno del servidor");
     }
   }
+});
+
+router.post("/requestSharing", async function (req, res, next) {
+  const session = req.session;
+  const registered = session.register;
+
+  console.log("Session: ", session);
+  console.log("Registered: ", registered);
+  console.log("User ID: ", session.user_id);
+
+  if (!registered) {
+    return res.status(404).json({ error: "User does not have a session or is not signed up" });
+  }
+
+  const user_id = session.user_id;
+
+  if (!user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+
+  var request = req.body;
+  if (
+    !request ||
+    !request.noteId ||
+    !request.accessMode
+ ) {
+   res
+     .status(400)
+     .send("noteId and accessMode are required to request share a note");
+   return;
+ }
+ if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
+    res
+      .status(400)
+      .send("accessMode must be 'r', 'w' or 'n'");
+    return;
+ }
+ try{
+  const sharingRequest = await noteModel.sharingRequest(user_id, request.noteId, request.accessMode, userModel.checkFriendship, notificationModel.createNotification);
+  res.status(200).json(sharingRequest);
+ }catch(err){
+  if(err.message === "Note not found"){
+    res.status(404).json({
+      message: "Note not found"
+    });
+  } else if(err.message === "User is not friend of the owner"){
+    res.status(403).json({
+      message: "User is not friend of the owner"
+    });
+  } else if(err.message === "User already has the requested access mode"){
+    res.status(400).json({
+      message: "User already has the requested access mode"
+    });
+  }
+  else{
+    console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
+    res.status(500).send("Internal server error");
+ }
+}
 });
 
 module.exports = router;
