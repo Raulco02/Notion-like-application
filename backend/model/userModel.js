@@ -207,7 +207,7 @@ class userModel {
         }
     
         // Verificar si el amigo está presente en la lista de amigos
-        if (!user.friends.includes(friendId) || !friend.friends.includes(userId)) {
+        if ((user.friends && !user.friends.includes(friendId)) || (friend.friends && !friend.friends.includes(userId))) {
             throw new Error("User is not a friend");
         }
     

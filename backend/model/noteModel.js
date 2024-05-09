@@ -278,6 +278,8 @@ class noteModel {
       .find({ user_id: userId })
       .toArray();
     notes.forEach(async (note) => {
+      console.log(note)
+      console.log(note.readers)
       if (note.readers && note.readers.includes(friendId)) {
         const updateQuery = { $pull: { readers: friendId } };
         const updateResult = await db.collection("Notes").findOneAndUpdate(
@@ -316,6 +318,7 @@ class noteModel {
           );
         }
       }
+      console.log(note.editors)
       if (note.editors && note.editors.includes(friendId)) {
         const updateQuery = { $pull: { editors: friendId } };
         const updateResult = await db.collection("Notes").findOneAndUpdate(
