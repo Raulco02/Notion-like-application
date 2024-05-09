@@ -54,6 +54,8 @@ class notificationModel{
             message = user.userName + " accepted your sharing request for the note: " + note.title;
         }else if(data.type === "af"){
             message = user.userName + " accepted your friend request";
+        }else if(data.type === "ss"){
+            message = user.userName + " shared the note: " + note.title + " with you";
         }
         return message;
     }

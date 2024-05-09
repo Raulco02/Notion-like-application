@@ -58,7 +58,7 @@ class userModel {
         }
     }
 
-    async createFriendshipRequest(senderId, receiverEmail) {
+    async createFriendshipRequest(senderId, receiverEmail, createNotification) {
         const db = await database.connectToServer();
         const usersCollection = db.collection("Users");
 
@@ -90,6 +90,8 @@ class userModel {
                     { $set: { friend_requests: [senderId] } }
                 );
             }
+            const notificacion = await userModel.createNotification("f", senderId, userId, null, null);
+            createNotification(notificacion);
         } else {
             // Manejar el caso en que el usuario no se encuentre
             throw new Error("User not found");
@@ -119,7 +121,7 @@ class userModel {
         return [];
     }
 
-    async setFriendshipRequest(userId, friendId, status) {
+    async setFriendshipRequest(userId, friendId, status, createNotification) {
         const db = await database.connectToServer();
         const usersCollection = db.collection("Users");
 
@@ -144,6 +146,9 @@ class userModel {
             { _id: new ObjectId(userId) },
             { $pull: { friend_requests: friendId } }
         );
+
+        const notificacion = await userModel.createNotification("af", userId, friendId, null, null);
+        createNotification(notificacion);
 
         return friendId;
     }
@@ -236,6 +241,14 @@ class userModel {
         return true;
     }
     
+    static async createNotification(type, sender_id, receiver_id,) {
+        const data = {
+            type: type,
+            sender_id: sender_id,
+            receiver_id: receiver_id,
+        };
+        return data;
+        }
     
 }
 

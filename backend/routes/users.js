@@ -1,6 +1,7 @@
 var crypto = require('crypto');
 var express = require('express');
 const userModel = require('../model/userModel');
+const { createNotification } = require('../model/notificationModel');
 var router = express.Router();
 
 //¿Controlar que el usuario sea admin para según qué acciones?¿Añadir boolean admin a session?
@@ -245,7 +246,7 @@ router.post("/friendship_request", async function (req, res, next) {
    return;
  }
   try{
-    await userModel.createFriendshipRequest(user_id, user.requestedUserEmail);
+    await userModel.createFriendshipRequest(user_id, user.requestedUserEmail, createNotification);
     console.log("Friendship request created successfully");
     res.status(200).json({
       message: "Friendship request created successfully"
@@ -343,7 +344,7 @@ router.post("/set_friendship_request", async function (req, res, next) {
     return;
   }
   try{
-    await userModel.setFriendshipRequest(user_id, user.userId, user.accepted);
+    await userModel.setFriendshipRequest(user_id, user.userId, user.accepted, createNotification);
     console.log("Friendship request set successfully");
     res.status(200).json({
       message: "Friendship request set successfully"

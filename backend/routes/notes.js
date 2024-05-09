@@ -218,7 +218,8 @@ router.post("/setSharing", async function (req, res, next) {
     !request ||
     !request.userId ||
     !request.noteId ||
-    !request.accessMode
+    !request.accessMode ||
+    !request.isAnswer
  ) {
    res
      .status(400)
@@ -232,7 +233,7 @@ router.post("/setSharing", async function (req, res, next) {
     return;
  }
  try{
-  await noteModel.setSharing(request.noteId, request.userId, user_id, request.accessMode, userModel.checkFriendship);
+  await noteModel.setSharing(request.noteId, request.userId, user_id, request.accessMode, request.isAnswer, userModel.checkFriendship, notificationModel.createNotification);
   res.status(200).json({
     message: "Note shared successfully"
   });

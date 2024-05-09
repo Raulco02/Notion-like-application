@@ -120,7 +120,7 @@ class noteModel {
     return rootNotes;
   }
 
-  async setSharing(noteId, userId, ownerId, accessMode, checkFriendship) {
+  async setSharing(noteId, userId, ownerId, accessMode, isAnswer, checkFriendship, createNotification) {
     const areFriends = await checkFriendship(ownerId, userId);
     if (!areFriends) {
       throw new Error("User is not friend of the owner");
@@ -176,6 +176,16 @@ class noteModel {
         subNotesUpdateResult.modifiedCount
       );
     }
+    let msgMode = "";
+    if (isAnswer === "true") {
+      msgMode = "as";
+    }
+    else {
+      msgMode = "ss";
+    }
+    const notificacion = await noteModel.createNotification(msgMode, ownerId, userId, noteId, accessMode);
+    console.log(notificacion)
+    createNotification(notificacion);
     // const updatedNote = updateResult;
     // console.log(updatedNote);
     // updatedNote.subNotes = subNotes;
@@ -401,15 +411,9 @@ class noteModel {
     if (userAccess === access_mode) {
       throw new Error("User already has the requested access mode");
     }
-    const notificationData = {
-      type: "s",
-      sender_id: userId,
-      receiver_id: ownerId,
-      note_id: noteId,
-      access_mode: access_mode,
-    };
 
-    const notification = await createNotification(notificationData);
+    const notification = await noteModel.createNotification("s", userId, ownerId, noteId, access_mode);
+    createNotification(notification);
     return notification;
   }
 
@@ -457,6 +461,18 @@ class noteModel {
 
     return users;
   }
+
+  static async createNotification(type, sender_id, receiver_id, note_id, access_mode) {
+    console.log("type:", type, "sender_id:", sender_id, "receiver_id:", receiver_id, "note_id:", note_id, "access_mode:", access_mode)
+    const data = {
+        type: type,
+        sender_id: sender_id,
+        receiver_id: receiver_id,
+        note_id: note_id,
+        access_mode: access_mode,
+    };
+    return data;
+    }
 }
 
 module.exports = new noteModel();
