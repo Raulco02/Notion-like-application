@@ -65,7 +65,7 @@ class userModel {
         const senderUserId = new ObjectId(senderId);
         const sender = await usersCollection.findOne({ _id: senderUserId });
         const user = await usersCollection.findOne({ email: receiverEmail });
-        if(user){
+        if (user) {
             const userId = user._id;
             const userIdString = user._id.toString();
             if (sender.friend_requests && sender.friend_requests.includes(userIdString)) {
@@ -95,7 +95,7 @@ class userModel {
             throw new Error("User not found");
         }
 
-    
+
         return true;
     }
 
@@ -152,39 +152,65 @@ class userModel {
         const db = await database.connectToServer();
         const usersCollection = db.collection("Users");
         const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
         if (user.friends) {
             const friendIds = user.friends.map(id => new ObjectId(id));
             const friends = await usersCollection.find(
                 { _id: { $in: friendIds } },
                 { projection: { _id: 1, userName: 1, email: 1 } }
             ).toArray();
+
+            for (const friend of friends) {
+                let sharedFound = false;
+
+                const notes = await db.collection("Notes").find({ user_id: friend._id.toString() }).toArray();
+
+                for (const note of notes) {
+                    if (note.readers !== undefined && note.readers.includes(userId)) {
+                        friend.sharing = true;
+                        sharedFound = true;
+                        break;
+                    }
+                    if (note.editors !== undefined && note.editors.includes(userId)) {
+                        friend.sharing = true;
+                        sharedFound = true;
+                        break;
+                    }
+                }
+
+                if (!sharedFound) {
+                    friend.shared = false;
+                }
+            }
+
             return friends;
         }
+
         return [];
     }
 
     async deleteFriend(userId, friendId) {
         const db = await database.connectToServer();
         const usersCollection = db.collection("Users");
-    
+
         const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
         const friend = await usersCollection.findOne({ _id: new ObjectId(friendId) });
-    
+
         if (!user || !friend) {
             throw new Error("Friend not found");
         }
-    
+
         // Verificar si el amigo está presente en la lista de amigos
         if (!user.friends.includes(friendId) || !friend.friends.includes(userId)) {
             throw new Error("User is not a friend");
         }
-    
+
         // Eliminar al amigo de la lista de amigos del usuario
         await usersCollection.updateOne(
             { _id: new ObjectId(userId) },
             { $pull: { friends: friendId } }
         );
-    
+
         // Eliminar al usuario de la lista de amigos del amigo
         await usersCollection.updateOne(
             { _id: new ObjectId(friendId) },
@@ -192,7 +218,7 @@ class userModel {
         );
 
         await setSharingDeletedFriend(userId, friendId);
-    
+
         return friendId;
     }
 
@@ -208,8 +234,8 @@ class userModel {
         }
         return true;
     }
-    
-    
+
+
 }
 
 module.exports = new userModel();

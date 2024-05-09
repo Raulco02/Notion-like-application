@@ -118,24 +118,21 @@ class noteModel {
         return rootNotes;
     }
 
-    async setSharing(noteId, userId, ownerId, accessMode, checkFriendship){
+    async setSharing(noteId, userId, ownerId, accessMode, checkFriendship) {
         const areFriends = await checkFriendship(ownerId, userId);
-        console.log("Somo amigo?", areFriends)
         if (!areFriends) {
             throw new Error("User is not friend of the owner");
         }
         const db = await database.connectToServer();
-        console.log("ownerId", ownerId);
-        console.log("noteId", new ObjectId(noteId));
         const objectNoteId = new ObjectId(noteId);
         let updateQuery = {};
         // Determinar qué acción tomar según el valor de access_mode
         if (accessMode === "r") {
             // Si access_mode es "r", agregar userId a readers
-            updateQuery = { $addToSet: { readers: userId } };
+            updateQuery = { $addToSet: { readers: userId }, $pull: { editors: userId } };
         } else if (accessMode === "w") {
             // Si access_mode es "w", agregar userId a editors
-            updateQuery = { $addToSet: { editors: userId } };
+            updateQuery = { $addToSet: { editors: userId }, $pull: { readers: userId } };
         } else if (accessMode === "n") {
             // Si access_mode es "n", eliminar userId de readers y editors
             updateQuery = { $pull: { readers: userId, editors: userId } };
@@ -145,39 +142,46 @@ class noteModel {
         const updateResult = await db.collection("Notes").findOneAndUpdate(
             {
                 _id: objectNoteId,
-                user_id: ownerId
+                user_id: ownerId,
             },
             updateQuery,
             {
-                returnOriginal: false
+                returnOriginal: false,
             }
         );
         if (!updateResult) {
             throw new Error("Note not found");
         }
-        const subNotes = await db.collection("Notes").find({
-            user_id: ownerId,
-            referencedNoteId: objectNoteId
-        }).toArray();
+        const subNotes = await db
+            .collection("Notes")
+            .find({
+                user_id: ownerId,
+                referencedNoteId: objectNoteId,
+            })
+            .toArray();
         // Actualizar las subnotas, si existen
         if (subNotes.length > 0) {
             const subNotesUpdateResult = await db.collection("Notes").updateMany(
                 {
                     user_id: ownerId,
-                    referencedNoteId: objectNoteId
+                    referencedNoteId: objectNoteId,
                 },
                 updateQuery
             );
 
-            console.log("Number of subnotes updated:", subNotesUpdateResult.modifiedCount);
+            console.log(
+                "Number of subnotes updated:",
+                subNotesUpdateResult.modifiedCount
+            );
         }
         // const updatedNote = updateResult;
         // console.log(updatedNote);
         // updatedNote.subNotes = subNotes;
         // console.log("Con subnotas Updated note:", updatedNote);
     }
+
     //When you delete a friendship, you must delete the sharing of the notes that the user has shared with the friend
-    async setSharingDeletedFriend(userId, friendId){
+    async setSharingDeletedFriend(userId, friendId) {
         const db = await database.connectToServer();
         const notes = await db.collection("Notes").find({ user_id: userId }).toArray();
         notes.forEach(async note => {
@@ -247,7 +251,7 @@ class noteModel {
             }
         });
     }
-    async getAccessUser(noteId, userId){
+    async getAccessUser(noteId, userId) {
         const db = await database.connectToServer();
         const note = await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
         if (!note) {
@@ -269,22 +273,22 @@ class noteModel {
         if (!areFriends) {
             throw new Error("User is not friend of the owner");
         }
-        
+
         const db = await database.connectToServer();
-    
+
         // Consulta para obtener todas las notas del propietario y sus subnotas
         const notes = await db.collection("Notes").find({ user_id: ownerId }).toArray();
-    
+
         // Mapear notas a objetos con la estructura de árbol
         const notesMap = {};
         const rootNotes = [];
         const permissionNotes = [];
-    
+
         // Crear un mapa de notas por su ID
         notes.forEach(note => {
             notesMap[note._id] = note;
         });
-    
+
         // Función recursiva para obtener todas las subnotas de una nota dada
         const getSubNotes = (noteId, parentId) => {
             const subNotes = [];
@@ -295,7 +299,7 @@ class noteModel {
                         note.access_mode = (note.readers && note.readers.includes(userId)) ? 'r' : 'w';
                         permissionNotes.push(note);
                     }
-    
+
                     // Si el padre tiene permisos, agregar la subnota a sus subnotas
                     if (parentId && notesMap[parentId] && permissionNotes.includes(notesMap[parentId])) {
                         const parentNote = notesMap[parentId];
@@ -310,7 +314,7 @@ class noteModel {
                 }
             });
         };
-    
+
         // Encontrar las notas raíz
         notes.forEach(note => {
             // Verificar si el usuario tiene permisos para esta nota o para alguno de sus ancestros
@@ -324,7 +328,7 @@ class noteModel {
                 }
                 parentId = parentNote && parentNote.referencedNoteId; // Verificar si parentNote es definido antes de acceder a referencedNoteId
             }
-    
+
             if (!hasPermission) {
                 // Agregar la nota raíz y sus subnotas
                 note.access_mode = (note.readers && note.readers.includes(userId)) ? 'r' : 'w';
@@ -333,11 +337,11 @@ class noteModel {
                 getSubNotes(note._id, null);
             }
         });
-    
+
         return rootNotes;
     }
-    
-    async sharingRequest(userId, noteId, access_mode, checkFriendship, createNotification){
+
+    async sharingRequest(userId, noteId, access_mode, checkFriendship, createNotification) {
         const db = await database.connectToServer();
 
         const note = await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
@@ -362,11 +366,53 @@ class noteModel {
             note_id: noteId,
             access_mode: access_mode
         };
-        
+
         const notification = await createNotification(notificationData);
         return notification;
     }
-    
+
+    async getAccessUsers(noteId, userId, getAllUsers) {
+        const db = await database.connectToServer();
+        const note = await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
+        if (!note) {
+            throw new Error("Note not found");
+        }
+        const readerIds = [];
+        if (note.readers) {
+            note.readers.forEach(reader => {
+                readerIds.push(reader);
+            });
+        }
+        const editorIds = [];
+        if (note.editors) {
+            note.editors.forEach(editor => {
+                editorIds.push(editor);
+            });
+        }
+        const arrayUsers = await getAllUsers();
+        const users = [];
+        arrayUsers.filter(user => {
+            const { role, password, friends, friend_requests, ...filteredUser } = user;
+            const newUser = { ...filteredUser }; // Crea un nuevo objeto para modificar
+            if (readerIds.includes(user._id.toString())) {
+                newUser.accessMode = 'r';
+                users.push(newUser);
+                return newUser;
+            } else if (editorIds.includes(user._id.toString())) {
+                newUser.accessMode = 'w';
+                users.push(newUser);
+                return newUser;
+            } else if (user._id.toString() === userId) {
+                newUser.accessMode = 'o';
+                users.push(newUser);
+                return newUser;
+            }
+            return false;
+        });
+
+        return users;
+    }
+
 
 }
 

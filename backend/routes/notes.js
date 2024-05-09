@@ -33,12 +33,12 @@ router.get("/getById", async function (req, res, next) {
       res.status(404).json({ message: "Note not found" });
       return;
     }
-    if (req.session.user_id !== note.user_id) {
-      res.status(403).json({
-        message: "You are not allowed to see this note"
-      });
-      return;
-    }
+    // if (req.session.user_id !== note.user_id) {
+    //   res.status(403).json({
+    //     message: "You are not allowed to see this note"
+    //   });
+    //   return;
+    // }
 
     // Devolver la nota encontrada
     res.status(200).json(note);
@@ -136,14 +136,14 @@ router.put("/:id/edit", async function (req, res, next) {
       });
       return;
     }
-    if (req.session.user_id !== currentNote.user_id) {
-      console.log("Session user id:", req.session.user_id);
-      console.log("note user id:", currentNote.user_id);
-      res.status(403).json({
-        message: "You are not allowed to update this note"
-      });
-      return;
-    }
+    // if (req.session.user_id !== currentNote.user_id) {
+    //   console.log("Session user id:", req.session.user_id);
+    //   console.log("note user id:", currentNote.user_id);
+    //   res.status(403).json({
+    //     message: "You are not allowed to update this note"
+    //   });
+    //   return;
+    // }
   } catch (err) {
     console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
     res.status(500).send("Internal server error");
@@ -219,38 +219,38 @@ router.post("/setSharing", async function (req, res, next) {
     !request.userId ||
     !request.noteId ||
     !request.accessMode
- ) {
-   res
-     .status(400)
-     .send("userId, noteId and accessMode are required to share a note");
-   return;
- }
- if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
+  ) {
+    res
+      .status(400)
+      .send("userId, noteId and accessMode are required to share a note");
+    return;
+  }
+  if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
     res
       .status(400)
       .send("accessMode must be 'r', 'w' or 'n'");
     return;
- }
- try{
-  await noteModel.setSharing(request.noteId, request.userId, user_id, request.accessMode, userModel.checkFriendship);
-  res.status(200).json({
-    message: "Note shared successfully"
-  });
- }catch(err){
-  if(err.message === "Note not found"){
-    res.status(404).json({
-      message: "Note not found"
-    });
-  } else if(err.message === "User is not friend of the owner"){
-    res.status(403).json({
-      message: "User is not friend of the owner"
-    });
   }
-  else{
-    console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
-    res.status(500).send("Internal server error");
+  try {
+    await noteModel.setSharing(request.noteId, request.userId, user_id, request.accessMode, userModel.checkFriendship);
+    res.status(200).json({
+      message: "Note shared successfully"
+    });
+  } catch (err) {
+    if (err.message === "Note not found") {
+      res.status(404).json({
+        message: "Note not found"
+      });
+    } else if (err.message === "User is not friend of the owner") {
+      res.status(403).json({
+        message: "User is not friend of the owner"
+      });
+    }
+    else {
+      console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
+      res.status(500).send("Internal server error");
+    }
   }
- }
 });
 
 router.get("/getAccessUser/:id", async function (req, res, next) {
@@ -266,14 +266,14 @@ router.get("/getAccessUser/:id", async function (req, res, next) {
     const access = await noteModel.getAccessUser(noteId, userId);
 
     // Devolver la nota encontrada
-    res.status(200).json({"access_mode:": access});
+    res.status(200).json({ "access_mode:": access });
 
   } catch (err) {
-    if(err.message === "Note not found"){
+    if (err.message === "Note not found") {
       res.status(404).json({
         message: "Note not found"
       });
-    } else{
+    } else {
       console.error(`Error al buscar las notas del usuario: ${err}`);
       res.status(500).send("Error interno del servidor");
     }
@@ -296,7 +296,7 @@ router.get("/getSharedNotes/:ownerId", async function (req, res, next) {
     res.status(200).json(sharedNotes);
 
   } catch (err) {
-    if(err.message === "User is not friend of the owner"){
+    if (err.message === "User is not friend of the owner") {
       res.status(403).json({
         message: "User is not friend of the owner"
       });
@@ -310,9 +310,9 @@ router.get("/getSharedNotes/:ownerId", async function (req, res, next) {
       res.status(404).json({
         message: "User not found"
       });
-    
+
     }
-    else{
+    else {
       console.error(`Error al buscar las notas del usuario: ${err}`);
       res.status(500).send("Error interno del servidor");
     }
@@ -342,40 +342,68 @@ router.post("/requestSharing", async function (req, res, next) {
     !request ||
     !request.noteId ||
     !request.accessMode
- ) {
-   res
-     .status(400)
-     .send("noteId and accessMode are required to request share a note");
-   return;
- }
- if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
+  ) {
+    res
+      .status(400)
+      .send("noteId and accessMode are required to request share a note");
+    return;
+  }
+  if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
     res
       .status(400)
       .send("accessMode must be 'r', 'w' or 'n'");
     return;
- }
- try{
-  const sharingRequest = await noteModel.sharingRequest(user_id, request.noteId, request.accessMode, userModel.checkFriendship, notificationModel.createNotification);
-  res.status(200).json(sharingRequest);
- }catch(err){
-  if(err.message === "Note not found"){
-    res.status(404).json({
-      message: "Note not found"
-    });
-  } else if(err.message === "User is not friend of the owner"){
-    res.status(403).json({
-      message: "User is not friend of the owner"
-    });
-  } else if(err.message === "User already has the requested access mode"){
-    res.status(400).json({
-      message: "User already has the requested access mode"
-    });
   }
-  else{
-    console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
-    res.status(500).send("Internal server error");
- }
-}
+  try {
+    const sharingRequest = await noteModel.sharingRequest(user_id, request.noteId, request.accessMode, userModel.checkFriendship, notificationModel.createNotification);
+    res.status(200).json(sharingRequest);
+  } catch (err) {
+    if (err.message === "Note not found") {
+      res.status(404).json({
+        message: "Note not found"
+      });
+    } else if (err.message === "User is not friend of the owner") {
+      res.status(403).json({
+        message: "User is not friend of the owner"
+      });
+    } else if (err.message === "User already has the requested access mode") {
+      res.status(400).json({
+        message: "User already has the requested access mode"
+      });
+    }
+    else {
+      console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
+      res.status(500).send("Internal server error");
+    }
+  }
+});
+
+
+router.get("/getAccessUsers/:noteId", async function (req, res, next) {
+  const noteId = req.params.noteId;
+  const userId = req.session.user_id;
+
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+
+  try {
+    const access = await noteModel.getAccessUsers(noteId, userId, userModel.getAllUsers);
+
+    // Devolver la nota encontrada
+    res.status(200).json(access);
+
+  } catch (err) {
+    if (err.message === "Note not found") {
+      res.status(404).json({
+        message: "Note not found"
+      });
+    } else {
+      console.error(`Error al buscar las notas del usuario: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
+  }
 });
 
 module.exports = router;

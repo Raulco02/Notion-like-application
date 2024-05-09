@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import FriendShipServiceInstance from '../../../services/FriendShipService';
+import { useNavigate } from 'react-router-dom';
 
 import './ModalFriendships.css';
 
@@ -11,6 +12,7 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
     const [filteredFriends, setFilteredFriends] = useState([]); // Estado para almacenar la lista de amigos filtrada
     const [friendRequests, setFriendRequest] = useState([]); // Estado para almacenar la lista de solicitudes de amistad
     const [mensajeSolicitudAmistadEnviada, setMensajeSolicitudAmistadEnviada] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Código que se ejecutará al montar el componente o cuando alguna de las dependencias cambie
@@ -102,6 +104,10 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
 
         }
 
+    }
+
+    const navigateFriendNotes = (friendName, friendId) => {
+        navigate(`/friendNotes/${friendName}/${friendId}`);
     }
 
     const deleteFriend = async (userId) => {
@@ -198,12 +204,21 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
             {/* Lista de amigos filtrada */}
             {/* Iterar sobre el arreglo de amigos filtrados y generar un div por cada amigo */}
             {filteredFriends !== undefined && filteredFriends.map((friend) => (
-                <div key={friend._id} className="friend-container" onMouseEnter={() => handleMouseEnter(friend._id)} onMouseLeave={handleMouseLeave} style={{ display: 'flex', margin: '1rem 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div key={friend._id} className="friend-container" onClick={() => navigateFriendNotes(friend.userName, friend._id)} onMouseEnter={() => handleMouseEnter(friend._id)} onMouseLeave={handleMouseLeave} style={{ display: 'flex', margin: '1rem 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginRight: '0.5rem' }}>
                         <img src="/whiteavatar.png" alt="Avatar" className="avatar" style={{ width: '50px', height: '50px' }} />
                     </div>
                     <div className="friend-info">
-                        <p style={{ margin: '0.5rem' }} className="name">{friend.userName}</p>
+                        <div style={{ display: 'flex', flexDirection: 'row' }}>
+
+                            {friend.sharing === true && (
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <img src="/sticky-note.png" alt="note" style={{ width: '20px', height: '20px' }} />
+                                </div>
+                            )}
+
+                            <p style={{ margin: '0.5rem' }} className="name">{friend.userName}</p>
+                        </div>
                         <p style={{ margin: '0.5rem' }} className="email">{friend.email}</p>
                     </div>
 

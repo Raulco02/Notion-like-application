@@ -16,6 +16,8 @@ function Navbar({ isAdmin }) {
 
   const handleClickLogout = () => {
     sessionStorage.removeItem('httpId'); //No parece que funcione, lo sigue mandando
+    // Eliminar la cookie "connect.sid"
+        
     async function logout() {
       try {
         const response = await UserServiceInstance.logout();
@@ -32,7 +34,7 @@ function Navbar({ isAdmin }) {
     setIsModalNotificationsOpen(false);
     setIsModalFriendsOpen(true);
 
-    if(isModalFriendsOpen){
+    if (isModalFriendsOpen) {
       setIsModalFriendsOpen(false);
     }
 
@@ -46,7 +48,7 @@ function Navbar({ isAdmin }) {
     setIsModalFriendsOpen(false);
     setIsModalNotificationsOpen(true);
 
-    if(isModalNotificationsOpen){
+    if (isModalNotificationsOpen) {
       setIsModalNotificationsOpen(false);
     }
   }
@@ -64,7 +66,7 @@ function Navbar({ isAdmin }) {
 
         <div className="friends-container">
           <button onClick={handleOpenModalFriends} className="navbar-button friends">
-            <img src="/friends.png" alt="Friends" height='30px'/>
+            <img src="/friends.png" alt="Friends" height='30px' />
           </button>
 
           {/* modal amigos */}

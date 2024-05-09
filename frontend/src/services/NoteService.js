@@ -27,6 +27,23 @@ class NoteService {
         return axios.delete(`${USER_BASE_REST_API_URL}/${id}/delete`, {withCredentials: true});
     }
 
+    //Sharing:
+    getAccessUser(referencedNoteId) {
+        return axios.get(USER_BASE_REST_API_URL + '/getAccessUser/' + referencedNoteId, {withCredentials: true});
+    }
+
+    getAccessUsers(referencedNoteId) {
+        return axios.get(USER_BASE_REST_API_URL + '/getAccessUsers/' + referencedNoteId, {withCredentials: true});
+    }
+
+    setSharing(userId, noteId, accessMode) {
+        return axios.post(USER_BASE_REST_API_URL + '/setSharing', { userId: userId, noteId: noteId, accessMode: accessMode }, { withCredentials: true });
+    }
+
+    getSharedNotes(userId) {
+        return axios.get(USER_BASE_REST_API_URL + '/getSharedNotes/' + userId, {withCredentials: true});
+    }
+
 }
 
 const NoteServiceInstance = new NoteService();

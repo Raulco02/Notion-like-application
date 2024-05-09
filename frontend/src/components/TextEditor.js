@@ -13,14 +13,25 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
   const [title, setTitle] = useState(noteSelected.title);
   const [content, setContent] = useState(noteSelected.content);
   const [editingTitle, setEditingTitle] = useState(false);
-
   const [isModalShareOpen, setIsModalShareOpen] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
-
+  const [isWRNO, setWRNO] = useState('');
 
   useEffect(() => {
+    getAccessMode();
     setContent(noteSelected.content);
     setTitle(noteSelected.title);
+
   }, [noteSelected]);
+
+  const getAccessMode = async () => {
+    try {
+      const response = await NoteServiceInstance.getAccessUser(noteSelected._id);
+      console.log('El modo de acceso es:', response.data['access_mode:']);
+      setWRNO(response.data['access_mode:']);
+    } catch (error) {
+      console.error('Error al obtener el modo de acceso:', error);
+    }
+  };
 
   const handleTitleClick = () => {
     setEditingTitle(true);
@@ -79,7 +90,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
       //actualizamos nota
       noteSelected.title = title;
       noteSelected.content = content;
-      
+
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
     }
@@ -114,36 +125,56 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
   };
 
   return (
-    <div className='text-editor'>
+    <div className='text-editor' style={{ pointerEvents: isWRNO === 'r' ? 'none' : 'auto', visibility: isWRNO === 'n' ? 'hidden' : 'visible' }}>
       <nav className='note-menu'>
-        <ul>
-          <li onClick={saveClick}>
-            <img alt='Save' src='/floppy-disk.png' height="25px"></img>
-          </li>
-          <li onClick={cancelClick}>
-            <img alt='Cancel' src='/cancel.png' height="25px"></img>
-          </li>
 
-          <div className='share-container'>
-            <li onClick={shareClick}>
-              <img alt='Share' src='/share.png' height="25px"></img>
-            </li>
+        {/* Se maneja el acceso a la nota */}
+        {(isWRNO === "o" || isWRNO === "w") && (
+          <>
+            <ul>
 
-            {/* modal amigos */}
-            {isModalShareOpen && (
-              <ModalShare
-                handleCloseModalShare={handleCloseModalShare}
-                note={noteSelected}
-              />
+              <li onClick={saveClick}>
+                <img alt='Save' src='/floppy-disk.png' height="25px"></img>
+              </li>
+              <li onClick={cancelClick}>
+                <img alt='Cancel' src='/cancel.png' height="25px"></img>
+              </li>
+
+              {isWRNO === "o" && (
+                <div className='share-container'>
+                  <li onClick={shareClick}>
+                    <img alt='Share' src='/share.png' height="25px"></img>
+                  </li>
+
+                  {/* modal amigos */}
+                  {isModalShareOpen && (
+                    <ModalShare
+                      handleCloseModalShare={handleCloseModalShare}
+                      note={noteSelected}
+                    />
+                  )}
+                </div>
+              )}
+
+            </ul>
+
+            {isWRNO === "o" && (
+              <ul>
+                <li onClick={deleteClick}>
+                  <img alt='Delete' src='/delete.png' height="25px"></img>
+                </li>
+              </ul>
             )}
-          </div>
+          </>
+        )}
 
-        </ul>
-        <ul>
-          <li onClick={deleteClick}>
-            <img alt='Delete' src='/delete.png' height="25px"></img>
-          </li>
-        </ul>
+        {/* Se maneja el acceso a la nota en caso de solo lectura */}
+        {isWRNO === "r" && (
+          <div style={{padding:'1.1rem', fontSize:'20px'}}>
+            You can only read this note
+          </div>
+        )}
+
       </nav>
 
       {editingTitle ? (
