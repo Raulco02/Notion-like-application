@@ -9,9 +9,16 @@ class noteModel {
     return await notes.toArray();
   }
 
-  async getNoteById(noteId) {
+  async getNoteById(noteId, userId) {
     const db = await database.connectToServer();
-    return await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
+    const note = await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
+    if (!note) {
+      throw new Error("Note not found");
+    }
+    if (note.user_id !== userId || (note.readers && note.readers.includes(userId)) || (note.editors && note.editors.includes(userId))) {
+      throw new Error("User does not have access to this note");
+    }
+    return note;
   }
 
   async createNewNote(newNote) {
