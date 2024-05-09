@@ -14,11 +14,25 @@ class notificationModel{
             throw err;
         }
     }
+
     async getNotifications(userId){
         try{
             const db = await database.connectToServer();
             const notifications = await db.collection("Notifications").find({receiver_id: userId}).toArray();
             return notifications;
+        }catch(err){
+            throw err;
+        }
+    }
+
+    async deleteNotification(notificationId, receiver_id){
+        try{
+            const db = await database.connectToServer();
+            const notification = await db.collection("Notifications").deleteOne({_id: new ObjectId(notificationId), receiver_id: receiver_id});
+            if(notification.deletedCount === 0){
+                throw new Error("Notification not found");
+            }
+            return notification;
         }catch(err){
             throw err;
         }
