@@ -75,24 +75,24 @@ class noteModel {
 
     async getUserNotes(userId, referencedNoteId) {
         const db = await database.connectToServer();
-        
+
         // Consulta para obtener todas las notas del usuario y sus subnotas
         const notes = await db.collection("Notes").find({ user_id: userId }).toArray();
-    
+
         // Mapear notas a objetos con la estructura de árbol
         const notesMap = {};
         const rootNotes = [];
-    
+
         // Crear un mapa de notas por su ID y encontrar las notas raíz
         notes.forEach(note => {
             notesMap[note._id] = note;
-    
+
             if (note.referencedNoteId.equals(new ObjectId('000000000000000000000000'))) {
                 console.log("Funciona");
                 rootNotes.push(note);
             }
         });
-    
+
         // Función recursiva para obtener todas las subnotas de una nota dada
         const getSubNotes = (noteId) => {
             const subNotes = [];
@@ -109,15 +109,15 @@ class noteModel {
 
             return subNotes;
         };
-    
+
         // Asignar subnotas a las notas correspondientes
         rootNotes.forEach(rootNote => {
             rootNote.subNotes = getSubNotes(rootNote._id);
         });
-    
+
         return rootNotes;
     }
-    
+
     async setSharing(noteId, userId, ownerId, accessMode, checkFriendship){
         const areFriends = await checkFriendship(ownerId, userId);
         console.log("Somo amigo?", areFriends)
@@ -140,16 +140,16 @@ class noteModel {
             // Si access_mode es "n", eliminar userId de readers y editors
             updateQuery = { $pull: { readers: userId, editors: userId } };
         }
-        
+
         // Realizar la actualización
         const updateResult = await db.collection("Notes").findOneAndUpdate(
-            { 
+            {
                 _id: objectNoteId,
-                user_id: ownerId 
+                user_id: ownerId
             },
             updateQuery,
-            { 
-                returnOriginal: false 
+            {
+                returnOriginal: false
             }
         );
         if (!updateResult) {
@@ -162,9 +162,9 @@ class noteModel {
         // Actualizar las subnotas, si existen
         if (subNotes.length > 0) {
             const subNotesUpdateResult = await db.collection("Notes").updateMany(
-                { 
+                {
                     user_id: ownerId,
-                    referencedNoteId: objectNoteId 
+                    referencedNoteId: objectNoteId
                 },
                 updateQuery
             );
@@ -184,13 +184,13 @@ class noteModel {
             if (note.readers && note.readers.includes(friendId)) {
                 const updateQuery = { $pull: { readers: friendId } };
                 const updateResult = await db.collection("Notes").findOneAndUpdate(
-                    { 
+                    {
                         _id: note._id,
-                        user_id: userId 
+                        user_id: userId
                     },
                     updateQuery,
-                    { 
-                        returnOriginal: false 
+                    {
+                        returnOriginal: false
                     }
                 );
                 if (!updateResult) {
@@ -203,26 +203,26 @@ class noteModel {
                 // Actualizar las subnotas, si existen
                 if (subNotes.length > 0) {
                     const subNotesUpdateResult = await db.collection("Notes").updateMany(
-                        { 
+                        {
                             user_id: userId,
-                            referencedNoteId: note._id 
+                            referencedNoteId: note._id
                         },
                         updateQuery
                     );
-        
+
                     console.log("Number of subnotes updated:", subNotesUpdateResult.modifiedCount);
                 }
             }
             if (note.editors && note.editors.includes(friendId)) {
                 const updateQuery = { $pull: { editors: friendId } };
                 const updateResult = await db.collection("Notes").findOneAndUpdate(
-                    { 
+                    {
                         _id: note._id,
-                        user_id: userId 
+                        user_id: userId
                     },
                     updateQuery,
-                    { 
-                        returnOriginal: false 
+                    {
+                        returnOriginal: false
                     }
                 );
                 if (!updateResult) {
@@ -235,13 +235,13 @@ class noteModel {
                 // Actualizar las subnotas, si existen
                 if (subNotes.length > 0) {
                     const subNotesUpdateResult = await db.collection("Notes").updateMany(
-                        { 
+                        {
                             user_id: userId,
-                            referencedNoteId: note._id 
+                            referencedNoteId: note._id
                         },
                         updateQuery
                     );
-        
+
                     console.log("Number of subnotes updated:", subNotesUpdateResult.modifiedCount);
                 }
             }
@@ -264,18 +264,82 @@ class noteModel {
         }
         return "n";
     }
-    async getSharedNotes(ownerId, userId, checkFriendship){
+    async getSharedNotes(ownerId, userId, checkFriendship) {
         const areFriends = await checkFriendship(ownerId, userId);
         if (!areFriends) {
             throw new Error("User is not friend of the owner");
         }
+        
         const db = await database.connectToServer();
-
-        const readerNotes = await db.collection("Notes").find({ user_id: ownerId, readers: { $in: [userId] } }).toArray();
-        const writerNotes = await db.collection("Notes").find({ user_id: ownerId, editors: { $in: [userId] } }).toArray();
-        const notes = { "readerNotes": readerNotes, "editorNotes": writerNotes };
-        return notes;
+    
+        // Consulta para obtener todas las notas del propietario y sus subnotas
+        const notes = await db.collection("Notes").find({ user_id: ownerId }).toArray();
+    
+        // Mapear notas a objetos con la estructura de árbol
+        const notesMap = {};
+        const rootNotes = [];
+        const permissionNotes = [];
+    
+        // Crear un mapa de notas por su ID
+        notes.forEach(note => {
+            notesMap[note._id] = note;
+        });
+    
+        // Función recursiva para obtener todas las subnotas de una nota dada
+        const getSubNotes = (noteId, parentId) => {
+            const subNotes = [];
+            notes.forEach(note => {
+                if (note.referencedNoteId && note.referencedNoteId.equals(noteId)) {
+                    // Verificar permisos en la subnota
+                    if ((note.readers && note.readers.includes(userId)) || (note.editors && note.editors.includes(userId))) {
+                        note.access_mode = (note.readers && note.readers.includes(userId)) ? 'r' : 'w';
+                        permissionNotes.push(note);
+                    }
+    
+                    // Si el padre tiene permisos, agregar la subnota a sus subnotas
+                    if (parentId && notesMap[parentId] && permissionNotes.includes(notesMap[parentId])) {
+                        const parentNote = notesMap[parentId];
+                        if (!parentNote.subNotes) {
+                            parentNote.subNotes = [];
+                        }
+                        parentNote.subNotes.push(note);
+                    } else {
+                        // Buscar el padre con permisos recursivamente
+                        getSubNotes(note._id, note.referencedNoteId);
+                    }
+                }
+            });
+        };
+    
+        // Encontrar las notas raíz
+        notes.forEach(note => {
+            // Verificar si el usuario tiene permisos para esta nota o para alguno de sus ancestros
+            let hasPermission = false;
+            let parentId = note.referencedNoteId;
+            while (parentId) {
+                const parentNote = notesMap[parentId];
+                if (parentNote && (parentNote.readers.includes(userId) || parentNote.editors.includes(userId))) {
+                    hasPermission = true;
+                    break;
+                }
+                parentId = parentNote && parentNote.referencedNoteId; // Verificar si parentNote es definido antes de acceder a referencedNoteId
+            }
+    
+            if (!hasPermission) {
+                // Agregar la nota raíz y sus subnotas
+                note.access_mode = (note.readers && note.readers.includes(userId)) ? 'r' : 'w';
+                rootNotes.push(note);
+                permissionNotes.push(note);
+                getSubNotes(note._id, null);
+            }
+        });
+    
+        return rootNotes;
     }
+    
+    
+    
+
 }
 
 module.exports = new noteModel();
