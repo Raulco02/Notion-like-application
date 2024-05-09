@@ -43,7 +43,7 @@ class notificationModel{
         const user = await userModel.getUserById(data.sender_id);
         let note = {};
         if(data.note_id){
-            note = await noteModel.getNoteById(data.note_id);
+            note = await noteModel.getNoteById(data.note_id, data.sender_id);
         }
         if(data.type === "s"){
             message = user.userName + " wants you to share the note: " + note.title + " with him/her";

@@ -17,7 +17,7 @@ class noteModel {
     if (!note) {
       throw new Error("Note not found");
     }
-    console.log(note.user_id, userId);
+    console.log('userId:', userId, 'note.user_id:', note.user_id);
     if (
       note.user_id !== userId &&
       note.readers &&
@@ -170,7 +170,7 @@ class noteModel {
       // Si access_mode es "n", eliminar userId de readers y editors
       updateQuery = { $pull: { readers: userId, editors: userId } };
     }
-
+  
     // Realizar la actualización
     const updateResult = await db.collection("Notes").findOneAndUpdate(
       {
@@ -185,6 +185,8 @@ class noteModel {
     if (!updateResult) {
       throw new Error("Note not found");
     }
+  
+    // Actualizar las subnotas directas
     const subNotes = await db
       .collection("Notes")
       .find({
@@ -192,7 +194,7 @@ class noteModel {
         referencedNoteId: objectNoteId,
       })
       .toArray();
-    // Actualizar las subnotas, si existen
+  
     if (subNotes.length > 0) {
       const subNotesUpdateResult = await db.collection("Notes").updateMany(
         {
@@ -201,17 +203,58 @@ class noteModel {
         },
         updateQuery
       );
-
+  
       console.log(
         "Number of subnotes updated:",
         subNotesUpdateResult.modifiedCount
       );
+  
+      // Función para actualizar las subnotas de manera recursiva
+      async function updateSubNotes(noteId) {
+        const objectNoteId = new ObjectId(noteId);
+        const subNotes = await db
+          .collection("Notes")
+          .find({
+            user_id: ownerId,
+            referencedNoteId: objectNoteId,
+          })
+          .toArray();
+  
+        // Actualizar las subnotas, si existen
+        if (subNotes.length > 0) {
+          const subNotesUpdateResult = await db.collection("Notes").updateMany(
+            {
+              user_id: ownerId,
+              referencedNoteId: objectNoteId,
+            },
+            updateQuery
+          );
+  
+          console.log(
+            "Number of subnotes updated:",
+            subNotesUpdateResult.modifiedCount
+          );
+  
+          // Llamar recursivamente para actualizar las subnotas de las subnotas
+          for (const subNote of subNotes) {
+            await updateSubNotes(subNote._id);
+          }
+        }
+      }
+  
+      // Llamar la función para actualizar las subnotas de manera recursiva
+      for (const subNote of subNotes) {
+        await updateSubNotes(subNote._id);
+      }
     }
     let msgMode = "";
     if (isAnswer === "true") {
       msgMode = "as";
     } else {
       msgMode = "ss";
+    }
+    if (accessMode === "n") {
+      return;
     }
     const notificacion = await noteModel.createNotification(
       msgMode,
