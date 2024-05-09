@@ -11,11 +11,19 @@ class noteModel {
 
   async getNoteById(noteId, userId) {
     const db = await database.connectToServer();
-    const note = await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
+    const note = await db
+      .collection("Notes")
+      .findOne({ _id: new ObjectId(noteId) });
     if (!note) {
       throw new Error("Note not found");
     }
-    if (note.user_id !== userId || (note.readers && note.readers.includes(userId)) || (note.editors && note.editors.includes(userId))) {
+    if (
+      note.user_id !== userId &&
+      note.readers &&
+      !note.readers.includes(userId) &&
+      note.editors &&
+      !note.editors.includes(userId)
+    ) {
       throw new Error("User does not have access to this note");
     }
     return note;
@@ -127,7 +135,15 @@ class noteModel {
     return rootNotes;
   }
 
-  async setSharing(noteId, userId, ownerId, accessMode, isAnswer, checkFriendship, createNotification) {
+  async setSharing(
+    noteId,
+    userId,
+    ownerId,
+    accessMode,
+    isAnswer,
+    checkFriendship,
+    createNotification
+  ) {
     const areFriends = await checkFriendship(ownerId, userId);
     if (!areFriends) {
       throw new Error("User is not friend of the owner");
@@ -138,10 +154,16 @@ class noteModel {
     // Determinar qué acción tomar según el valor de access_mode
     if (accessMode === "r") {
       // Si access_mode es "r", agregar userId a readers
-      updateQuery = { $addToSet: { readers: userId }, $pull: { editors: userId } };
+      updateQuery = {
+        $addToSet: { readers: userId },
+        $pull: { editors: userId },
+      };
     } else if (accessMode === "w") {
       // Si access_mode es "w", agregar userId a editors
-      updateQuery = { $addToSet: { editors: userId }, $pull: { readers: userId } };
+      updateQuery = {
+        $addToSet: { editors: userId },
+        $pull: { readers: userId },
+      };
     } else if (accessMode === "n") {
       // Si access_mode es "n", eliminar userId de readers y editors
       updateQuery = { $pull: { readers: userId, editors: userId } };
@@ -186,12 +208,17 @@ class noteModel {
     let msgMode = "";
     if (isAnswer === "true") {
       msgMode = "as";
-    }
-    else {
+    } else {
       msgMode = "ss";
     }
-    const notificacion = await noteModel.createNotification(msgMode, ownerId, userId, noteId, accessMode);
-    console.log(notificacion)
+    const notificacion = await noteModel.createNotification(
+      msgMode,
+      ownerId,
+      userId,
+      noteId,
+      accessMode
+    );
+    console.log(notificacion);
     createNotification(notificacion);
     // const updatedNote = updateResult;
     // console.log(updatedNote);
@@ -318,78 +345,191 @@ class noteModel {
       .toArray();
 
     // Mapear notas a objetos con la estructura de árbol
+    const permissionNotesMap = {};
     const notesMap = {};
-    const rootNotes = [];
-    const permissionNotes = [];
+    let rootNotes = [];
+    let permissionNotes = [];
 
     // Crear un mapa de notas por su ID
     notes.forEach((note) => {
       notesMap[note._id] = note;
-    });
-
-    // Función recursiva para obtener todas las subnotas de una nota dada
-    const getSubNotes = (noteId, parentId) => {
-      const subNotes = [];
-      notes.forEach((note) => {
-        if (note.referencedNoteId && note.referencedNoteId.equals(noteId)) {
-          // Verificar permisos en la subnota
-          if (
-            (note.readers && note.readers.includes(userId)) ||
-            (note.editors && note.editors.includes(userId))
-          ) {
-            note.access_mode =
-              note.readers && note.readers.includes(userId) ? "r" : "w";
-            permissionNotes.push(note);
-          }
-
-          // Si el padre tiene permisos, agregar la subnota a sus subnotas
-          if (
-            parentId &&
-            notesMap[parentId] &&
-            permissionNotes.includes(notesMap[parentId])
-          ) {
-            const parentNote = notesMap[parentId];
-            if (!parentNote.subNotes) {
-              parentNote.subNotes = [];
-            }
-            parentNote.subNotes.push(note);
-          } else {
-            // Buscar el padre con permisos recursivamente
-            getSubNotes(note._id, note.referencedNoteId);
-          }
-        }
-      });
-    };
-
-    // Encontrar las notas raíz
-    notes.forEach((note) => {
-      // Verificar si el usuario tiene permisos para esta nota o para alguno de sus ancestros
-      let hasPermission = false;
-      let parentId = note.referencedNoteId;
-      while (parentId) {
-        const parentNote = notesMap[parentId];
-        if (
-          parentNote &&
-          (parentNote.readers.includes(userId) ||
-            parentNote.editors.includes(userId))
-        ) {
-          hasPermission = true;
-          break;
-        }
-        parentId = parentNote && parentNote.referencedNoteId; // Verificar si parentNote es definido antes de acceder a referencedNoteId
-      }
-
-      if (!hasPermission) {
-        // Agregar la nota raíz y sus subnotas
+      if (
+        (note.readers && note.readers.includes(userId)) ||
+        (note.editors && note.editors.includes(userId))
+      ) {
         note.access_mode =
           note.readers && note.readers.includes(userId) ? "r" : "w";
-        rootNotes.push(note);
         permissionNotes.push(note);
-        getSubNotes(note._id, null);
+        permissionNotesMap[note._id] = note;
       }
     });
 
+    rootNotes = permissionNotes.filter(
+      (note) =>
+        note.referencedNoteId.equals(new ObjectId("000000000000000000000000"))
+    );
+    // Filtrar permissionNotes para eliminar las notas raíz
+    permissionNotes = permissionNotes.filter(
+      (note) =>
+        !note.referencedNoteId.equals(new ObjectId("000000000000000000000000"))
+    );
+
+    // Crear un mapa de notas por su _id para facilitar la búsqueda
+
+    rootNotes.forEach((note) => {
+      notesMap[note._id] = note;
+    });
+
+    const findAncestor = (noteId) => {
+      const note = notesMap[noteId];
+      if (!note) {
+        return null; // Si no se encuentra la nota en notesMap, retorna null
+      }
+      if (permissionNotesMap[noteId]) {
+        return note; // Si se encuentra la nota en permissionNotesMap, retorna la nota
+      }
+      return findAncestor(note.referencedNoteId); // Buscar el ancestro recursivamente
+    };
+
+    // Iterar sobre las notas restantes en permissionNotes
+    permissionNotes.forEach((note) => {
+      // Encontrar el padre con permisos en rootNotes
+      const parentNote = permissionNotesMap[note.referencedNoteId];
+      if(note._id.equals(new ObjectId("663b85671213c0bcfc5bf15c")))
+        console.log(note, parentNote)
+      if (parentNote) {
+        // if (parentNote && parentNote.referencedNoteId.equals(new ObjectId("000000000000000000000000"))) {
+        //   rootNotes.push(note);
+        // }
+        // else if (parentNote && !parentNote.referencedNoteId.equals(new ObjectId("000000000000000000000000"))) {
+        //   const ancestor = findAncestor(note.referencedNoteId);
+        //   console.log('Ancestors')
+        //   console.log(note)
+        //   console.log(ancestor)
+        //   if(ancestor !== null){
+        //     console.log(ancestor.referencedNoteId.equals(new ObjectId("000000000000000000000000")))
+        //     if(!ancestor.referencedNoteId.equals(new ObjectId("000000000000000000000000"))){
+        //       console.log(note)
+        //       if(ancestor.subNotes === undefined){
+        //         ancestor.subNotes = [];
+        //         ancestor.subNotes.push(note);
+        //       }
+        //     }else{
+        //       console.log('es root')
+        //       rootNotes.push(note);
+        //     }
+        //   }
+        //   else{
+        //     rootNotes.push(note);
+        //   }
+        // }
+        // Si se encuentra un padre con permisos, agregar la nota como una subnota del padre
+        if (!parentNote.subNotes) {
+          parentNote.subNotes = [];
+        }
+        parentNote.subNotes.push(note);
+
+      } else {
+        if (note.referencedNoteId.equals(new ObjectId("000000000000000000000000"))) {
+          rootNotes.push(note);
+        }
+        const second = notesMap[note.referencedNoteId];
+        if(second && second.referencedNoteId.equals(new ObjectId("000000000000000000000000"))){
+          rootNotes.push(note);
+        } else if (second && !second.referencedNoteId.equals(new ObjectId("000000000000000000000000"))) {
+          const ancestor = findAncestor(note.referencedNoteId);
+          if(ancestor !== null){
+            console.log(ancestor.referencedNoteId.equals(new ObjectId("000000000000000000000000")))
+            console.log(ancestor)
+            if(!ancestor.referencedNoteId.equals(new ObjectId("000000000000000000000000"))){
+              console.log(note)
+              if(ancestor.subNotes === undefined){
+                console.log('entra')
+                ancestor.subNotes = [];
+                ancestor.subNotes.push(note);
+              }
+              else{
+                ancestor.subNotes.push(note);
+              }
+              console.log(ancestor)
+            }else{
+              rootNotes.push(note);
+            }
+          }
+
+        }
+      }
+    });
     return rootNotes;
+
+    // // Función recursiva para obtener todas las subnotas de una nota dada
+    // const getSubNotes = (noteId, parentId) => {
+    //   const subNotes = [];
+    //   notes.forEach((note) => {
+    //     if (note.referencedNoteId && note.referencedNoteId.equals(noteId)) {
+    //       // Verificar permisos en la subnota
+    //       if (
+    //         (note.readers && note.readers.includes(userId)) ||
+    //         (note.editors && note.editors.includes(userId))
+    //       ) {
+    //         note.access_mode =
+    //           note.readers && note.readers.includes(userId) ? "r" : "w";
+    //         permissionNotes.push(note);
+    //       }
+    //       // Si el padre tiene permisos, agregar la subnota a sus subnotas
+    //       if (
+    //         parentId &&
+    //         notesMap[parentId] &&
+    //         permissionNotes.includes(notesMap[parentId])
+    //       ) {
+    //         const parentNote = notesMap[parentId];
+    //         if (!parentNote.subNotes) {
+    //           parentNote.subNotes = [];
+    //         }
+    //         parentNote.subNotes.push(note);
+    //         getSubNotes(note._id, parentId);
+    //       } else {
+    //         // Buscar el padre con permisos recursivamente
+    //         getSubNotes(note._id, note.referencedNoteId);
+    //       }
+    //     }
+    //   });
+    // };
+
+    // // Encontrar las notas raíz
+    // notes.forEach((note) => {
+    //   // Verificar si el usuario tiene permisos para esta nota o para alguno de sus ancestros
+    //   let hasPermission = false;
+    //   let parentId = note.referencedNoteId;
+    //   while (parentId) {
+    //     const parentNote = notesMap[parentId];
+    //     if (
+    //       parentNote &&
+    //       (parentNote.readers.includes(userId) ||
+    //         parentNote.editors.includes(userId))
+    //     ) {
+    //       hasPermission = true;
+    //       break;
+    //     }
+    //     parentId = parentNote && parentNote.referencedNoteId; // Verificar si parentNote es definido antes de acceder a referencedNoteId
+    //   }
+
+    //   if (!hasPermission) {
+    //     // Agregar la nota raíz y sus subnotas
+    //     if (
+    //       (note.readers && note.readers.includes(userId)) ||
+    //       (note.editors && note.editors.includes(userId))
+    //     ) {
+    //     note.access_mode =
+    //       note.readers && note.readers.includes(userId) ? "r" : "w";
+    //     rootNotes.push(note);
+    //     permissionNotes.push(note);
+    //     getSubNotes(note._id, null);
+    //     }
+    //   }
+    // });
+
+    // return rootNotes;
   }
 
   async sharingRequest(
@@ -419,7 +559,13 @@ class noteModel {
       throw new Error("User already has the requested access mode");
     }
 
-    const notification = await noteModel.createNotification("s", userId, ownerId, noteId, access_mode);
+    const notification = await noteModel.createNotification(
+      "s",
+      userId,
+      ownerId,
+      noteId,
+      access_mode
+    );
     createNotification(notification);
     return notification;
   }
@@ -469,17 +615,34 @@ class noteModel {
     return users;
   }
 
-  static async createNotification(type, sender_id, receiver_id, note_id, access_mode) {
-    console.log("type:", type, "sender_id:", sender_id, "receiver_id:", receiver_id, "note_id:", note_id, "access_mode:", access_mode)
+  static async createNotification(
+    type,
+    sender_id,
+    receiver_id,
+    note_id,
+    access_mode
+  ) {
+    console.log(
+      "type:",
+      type,
+      "sender_id:",
+      sender_id,
+      "receiver_id:",
+      receiver_id,
+      "note_id:",
+      note_id,
+      "access_mode:",
+      access_mode
+    );
     const data = {
-        type: type,
-        sender_id: sender_id,
-        receiver_id: receiver_id,
-        note_id: note_id,
-        access_mode: access_mode,
+      type: type,
+      sender_id: sender_id,
+      receiver_id: receiver_id,
+      note_id: note_id,
+      access_mode: access_mode,
     };
     return data;
-    }
+  }
 }
 
 module.exports = new noteModel();
