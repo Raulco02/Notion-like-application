@@ -8,7 +8,7 @@ function Navbar({ isAdmin }) {
   const navigate = useNavigate(); // Inicializa el hook useNavigate
   const [isModalFriendsOpen, setIsModalFriendsOpen] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
   const [isModalNotificationsOpen, setIsModalNotificationsOpen] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
-  
+
 
   const handleClickUsers = () => {
     navigate('/usersManagement');
@@ -32,6 +32,10 @@ function Navbar({ isAdmin }) {
     setIsModalNotificationsOpen(false);
     setIsModalFriendsOpen(true);
 
+    if(isModalFriendsOpen){
+      setIsModalFriendsOpen(false);
+    }
+
   }
 
   const handleCloseModalFriends = () => {
@@ -41,6 +45,10 @@ function Navbar({ isAdmin }) {
   const handleOpenModalNotifications = () => {
     setIsModalFriendsOpen(false);
     setIsModalNotificationsOpen(true);
+
+    if(isModalNotificationsOpen){
+      setIsModalNotificationsOpen(false);
+    }
   }
 
   const handleCloseModalNotifications = () => {
@@ -53,9 +61,11 @@ function Navbar({ isAdmin }) {
       <div className="navbar-right">
         {/* Botones a la derecha */}
         {isAdmin && <button onClick={handleClickUsers} className="navbar-button">Users Management</button>}
-        <button onClick={handleClickLogout} className="navbar-button">Logout</button>
+
         <div className="friends-container">
-          <button onClick={handleOpenModalFriends} className="navbar-button friends">Friends</button>
+          <button onClick={handleOpenModalFriends} className="navbar-button friends">
+            <img src="/friends.png" alt="Friends" height='30px'/>
+          </button>
 
           {/* modal amigos */}
           {isModalFriendsOpen && (
@@ -67,7 +77,9 @@ function Navbar({ isAdmin }) {
         </div>
 
         <div className='notifications-container'>
-          <button onClick={handleOpenModalNotifications} className="navbar-button">Notifications</button>
+          <button onClick={handleOpenModalNotifications} className="navbar-button">
+            <img src="/notification-disabled.png" alt="Notifications" height='30px' />
+          </button>
 
           {/* modal notificaciones */}
           {isModalNotificationsOpen && (
@@ -78,6 +90,10 @@ function Navbar({ isAdmin }) {
           )}
 
         </div>
+
+        <button onClick={handleClickLogout} className="navbar-button">
+          <img src="/logout.png" alt="Logout" height='30px' />
+        </button>
 
       </div>
     </div>

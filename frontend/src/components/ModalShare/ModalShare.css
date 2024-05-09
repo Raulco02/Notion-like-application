@@ -1,0 +1,23 @@
+.modal-share{
+    background-color: #1c2229;
+    position: absolute;
+    width: 410px;
+    height: 400px;
+    top: calc(100% + 10px); /* Ajusta según sea necesario */
+    left: 400%; /* Ajusta según sea necesario */
+    transform: translateX(-50%);
+    border-radius: 10px;
+    padding: 1rem;
+    overflow-y: scroll;
+    z-index: 10;
+    color: white;
+}
+
+.share-container{
+    position: relative;
+}
+
+.modal-share-title {
+    font-size: 1.5rem;
+    margin: 1rem 0;
+}

@@ -3,7 +3,7 @@
     color: white;
     display: flex;
     justify-content: flex-end; /* Coloca los elementos a los lados */
-    padding: 10px 20px; /* Ajusta el espacio alrededor de los elementos */
+    padding: 0.5rem; /* Ajusta el espacio alrededor de los elementos */
   }
   
   .navbar-button {
@@ -33,7 +33,7 @@
     width: 300px;
     height: 600px;
     top: calc(100% + 15px); /* Ajusta según sea necesario */
-    left: -70%; /* Ajusta según sea necesario */
+    left: -250%; /* Ajusta según sea necesario */
     transform: translateX(-50%);
     border-radius: 10px;
     padding: 1rem;

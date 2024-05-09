@@ -141,7 +141,7 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
       </div>
     ));
   };
-  
+
 
 
   return (
@@ -150,17 +150,27 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
         <ul className='top-menu'>
 
           <li className='clickable'>
-            <span onClick={nuevaNotaClick}>New note</span>
+            <span onClick={nuevaNotaClick} style={{ display:'flex', flexDirection:'row' }}>
+              <img alt='+' src='/sticky-note.png' height="30px" style={{ marginRight:'0.5rem' }} />
+              <div style={{ display:'flex', alignItems:'center' }}>
+                New note
+              </div>
+            </span>
           </li>
 
           <li className='clickable'>
-            <span onClick={nuevaSubNotaClick}> New subnote</span>
+            <span onClick={nuevaSubNotaClick} style={{ display:'flex', flexDirection:'row' }}>
+              <img alt='+' src='/notes.png' height="30px" style={{ marginRight:'0.5rem' }}/>
+              <div style={{ display:'flex', alignItems:'center' }}>
+                New subnote
+              </div>
+            </span>
           </li>
 
         </ul>
 
         <ul className='top-menu'>
-        <li>
+          <li>
             {userName && (<span ><strong>{userName}'s notes</strong></span>)}
           </li>
 
