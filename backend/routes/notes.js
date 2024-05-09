@@ -378,4 +378,31 @@ router.post("/requestSharing", async function (req, res, next) {
 }
 });
 
+router.get("/getAccessUsers/:noteId", async function (req, res, next) {
+  const noteId = req.params.noteId;
+  const userId = req.session.user_id;
+
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+
+  try {
+    const access = await noteModel.getAccessUsers(noteId, userId, userModel.getAllUsers);
+
+    // Devolver la nota encontrada
+    res.status(200).json(access);
+
+  } catch (err) {
+    if(err.message === "Note not found"){
+      res.status(404).json({
+        message: "Note not found"
+      });
+    } else{
+      console.error(`Error al buscar las notas del usuario: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
+  }
+});
+
 module.exports = router;
