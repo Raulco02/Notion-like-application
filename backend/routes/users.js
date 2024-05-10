@@ -206,7 +206,7 @@ router.put("/edit", async function (req, res, next) {
     return res.status(401).send("User is not signed in")
   }
   if(!req.session.role || req.session.role !== 'a'){
-    return res.status(403).send("User is not signed in")
+    return res.status(403).send("User must be admin to edit users")
   }
 
   try{

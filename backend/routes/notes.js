@@ -127,13 +127,53 @@ router.post("/create", async function (req, res, next) {
   }
 });
 
+router.post("/create_admin", async function (req, res, next) {
+  var newNote = req.body;
+
+  var userId = req.session.user_id;
+
+
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+
+  if(!req.session.role || req.session.role !== "a"){
+    res.status(403).json({ message: "User must be admin to create a note" })
+    return;
+  }
+
+
+  if (!newNote || !newNote.title || !newNote.content || !newNote.referencedNoteId || !newNote.user_id) {
+    res.status(400).send("Title, content, Note Reference and user id are required to create a new note");
+    return;
+  }
+
+  try {
+    // Insertar la nueva nota en la base de datos
+    const resultId = await noteModel.createNewNote(newNote);
+
+    // Devolver el id de la nota como parte de la respuesta
+    res.status(200).json({
+      message: "Note created successfully",
+      noteId: resultId
+    });
+
+  } catch (err) {
+    console.error(`Something went wrong trying to insert a document: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+});
+
 
 router.put("/:id/edit", async function (req, res, next) {
   var updatedNote = req.body;
   var noteId = req.params.id;
   // var findQuery = { _id: new ObjectId(noteId) };
   var updateQuery = { $set: req.body };
-
+  if(!req.session.user_id){
+    return res.status(401).send("User is not signed in")
+  }
   if (
     !updatedNote ||
     !updatedNote.title ||
@@ -177,6 +217,61 @@ router.put("/:id/edit", async function (req, res, next) {
   }
 });
 
+router.put("/:id/edit_admin", async function (req, res, next) {
+  var updatedNote = req.body;
+  var noteId = req.params.id;
+  // var findQuery = { _id: new ObjectId(noteId) };
+  var updateQuery = { $set: req.body };
+  if(!req.session.user_id){
+    return res.status(401).send("User is not signed in")
+  }
+  if(!req.session.role || req.session.role !== 'a'){
+    return res.status(403).send("User must be admin to edit users")
+  }
+  if (
+    !updatedNote ||
+    !updatedNote.title ||
+    !updatedNote.content ||
+    !updatedNote.user_id
+  ) {
+    res
+      .status(400)
+      .send("Title, content and user_id are required to update a note");
+    return;
+  }
+  try {
+    const currentNote = await noteModel.getNoteById(noteId, updatedNote.user_id);
+    if (!currentNote) {
+      res.status(404).json({
+        message: "Note not found"
+      });
+      return;
+    }
+    if (req.session.user_id !== currentNote.user_id && (currentNote.editors && !currentNote.editors.includes(req.session.user_id))) {
+      console.log("Session user id:", req.session.user_id);
+      console.log("note user id:", currentNote.user_id);
+      res.status(403).json({
+        message: "You are not allowed to update this note"
+      });
+      return;
+    }
+  } catch (err) {
+    console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+  try {
+    await noteModel.updateNoteById(noteId, updateQuery);
+
+    console.log('Document updated');
+    res.status(200).json({
+      message: "Note updated successfully"
+    });
+  } catch (err) {
+    console.error(`Something went wrong trying to update one document: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+});
+
 router.delete("/:id/delete", async function (req, res, next) {
   var noteId = req.params.id;
   if (!noteId) {
@@ -188,6 +283,52 @@ router.delete("/:id/delete", async function (req, res, next) {
     return;
   }
 
+  try {
+    // const db = await database.connectToServer();
+    // db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
+    await noteModel.deleteNoteById(noteId, req.session.user_id, req.session.role);
+    console.log("Note deleted successfully");
+    res.status(200).json({
+      message: "Note deleted successfully"
+    });
+  } catch (err) {
+    if(err.message === "Note not found"){
+      res.status(404).json({
+        message: "Note not found"
+      });
+    }else if(err.message === "User notes not found"){
+      res.status(404).json({
+        message: "User notes not found"
+      });
+    }
+    else if(err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).json({
+        message: "Invalid note ID"
+      });
+    }else if(err.message === "User does not have access to this note"){
+      res.status(403).json({
+        message: "User does not have access to this note"
+      });
+    }else{
+      console.error(`Error al buscar la nota por ID: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
+  }
+});
+
+router.delete("/:id/delete_admin", async function (req, res, next) {
+  var noteId = req.params.id;
+  if (!noteId) {
+    res.status(400).json({ message: "Note ID is required to delete a note" });
+    return;
+  }
+  if (!req.session.user_id) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+  if(!req.session.role || req.session.role !== 'a'){
+    return res.status(403).send("User must be admin to edit users")
+  }
   try {
     // const db = await database.connectToServer();
     // db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
