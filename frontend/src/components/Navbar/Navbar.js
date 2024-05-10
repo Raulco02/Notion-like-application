@@ -128,7 +128,11 @@ function Navbar({ isAdmin }) {
     <div className="navbar">
       <div className="navbar-right">
         {/* Botones a la derecha */}
-        {isAdmin && <button onClick={handleClickUsers} className="navbar-button">Users Management</button>}
+        {isAdmin &&
+          <button onClick={handleClickUsers} className="navbar-button">
+            <img src="/setting.png" alt="User management" height='30px' />
+          </button>
+        }
 
         <div className="friends-container">
           <button onClick={handleOpenModalFriends} className="navbar-button friends">

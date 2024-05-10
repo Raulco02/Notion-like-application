@@ -10,14 +10,24 @@ const e = require("express");
 
 router.get("/", async function (req, res, next) {
   console.log("GET /notes")
+  if (!req.session.user_id) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+  if (req.session.role !== "a") {
+    res.status(403).json({ message: "User is not an admin" });
+    return;
+  }
   const arrayNotes = await noteModel.getAllNotes();
-  res.json(arrayNotes);
+  return res.json(arrayNotes);
 });
 
 // Endpoint para obtener una nota por su ID
 router.get("/getById", async function (req, res, next) {
   const noteId = req.query.id; // ID de la nota solicitada
-
+  if (!req.session.user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
   if (!noteId) {
     // Si no se proporciona el ID en los parámetros de consulta, devolver un mensaje de error
     res.status(400).json({ message: "Se requiere el parámetro 'id' en la URL" });
@@ -26,32 +36,85 @@ router.get("/getById", async function (req, res, next) {
 
   try {
 
-    const note = await noteModel.getNoteById(noteId, req.session.user_id);
+    const note = await noteModel.getNoteById(noteId,req.session.user_id);
 
     // Devolver la nota encontrada
     res.status(200).json(note);
 
   } catch (err) {
-    if (err.message === "Note not found") {
+    if(err.message === "Note not found"){
       res.status(404).json({
         message: "Note not found"
       });
-    } else if (err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer") {
+      return;
+    }else if(err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
       res.status(400).json({
         message: "Invalid note ID"
       });
-    } else if (err.message === "User does not have access to this note") {
+      return;
+    }else if(err.message === "User does not have access to this note"){
       res.status(403).json({
         message: "User does not have access to this note"
       });
+      return;
 
-    } else {
+    }else{
       console.error(`Error al buscar la nota por ID: ${err}`);
       res.status(500).send("Error interno del servidor");
+      return;
     }
 
   }
 });
+
+// Endpoint para obtener una nota por su ID
+router.get("/getByIdAdmin", async function (req, res, next) {
+  const noteId = req.query.id; // ID de la nota solicitada
+  if (!req.session.user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+  if (req.session.role !== "a") {
+    return res.status(403).json({ error: "User is not an admin" });
+  }
+  if (!noteId) {
+    // Si no se proporciona el ID en los parámetros de consulta, devolver un mensaje de error
+    res.status(400).json({ message: "Se requiere el parámetro 'id' en la URL" });
+    return;
+  }
+
+  try {
+
+    const note = await noteModel.getNoteByIdAdmin(noteId);
+
+    // Devolver la nota encontrada
+    res.status(200).json(note);
+
+  } catch (err) {
+    if(err.message === "Note not found"){
+      res.status(404).json({
+        message: "Note not found"
+      });
+      return;
+    }else if(err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).json({
+        message: "Invalid note ID"
+      });
+      return;
+    }else if(err.message === "User does not have access to this note"){
+      res.status(403).json({
+        message: "User does not have access to this note"
+      });
+      return;
+
+    }else{
+      console.error(`Error al buscar la nota por ID: ${err}`);
+      res.status(500).send("Error interno del servidor");
+      return;
+    }
+
+  }
+});
+
 
 router.get("/getUserNotes", async function (req, res, next) {
   const userId = req.session.user_id; // ID de la nota solicitada
@@ -64,6 +127,39 @@ router.get("/getUserNotes", async function (req, res, next) {
 
   try {
     userNotes = await noteModel.getUserNotes(userId, referencedNoteId);
+
+    if (!userNotes) {
+      // Si no se encuentra la nota, devolver un mensaje de error
+      res.status(404).json({ message: "User notes not found" });
+      return;
+    }
+    console.log(userNotes)
+
+    // Devolver la nota encontrada
+    res.status(200).json(userNotes);
+
+  } catch (err) {
+    console.error(`Error al buscar las notas del usuario: ${err}`);
+    res.status(500).send("Error interno del servidor");
+  }
+});
+
+router.get("/getUserNotesAdmin/:id", async function (req, res, next) {
+  const userId = req.session.user_id; // ID de la nota solicitada
+  var referencedNoteId = req.query.referencedNoteId;
+  const id = req.params.id;
+
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+  if (!req.session.role && req.session.role !== "a") {
+    res.status(403).json({ message: "User must be admin" });
+    return;
+  }
+
+  try {
+    userNotes = await noteModel.getUserNotes(id, referencedNoteId);
 
     if (!userNotes) {
       // Si no se encuentra la nota, devolver un mensaje de error
@@ -115,12 +211,53 @@ router.post("/create", async function (req, res, next) {
   }
 });
 
+router.post("/create_admin", async function (req, res, next) {
+  var newNote = req.body;
+
+  var userId = req.session.user_id;
+
+
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+
+  if(!req.session.role || req.session.role !== "a"){
+    res.status(403).json({ message: "User must be admin to create a note" })
+    return;
+  }
+
+
+  if (!newNote || !newNote.title || !newNote.content || !newNote.referencedNoteId || !newNote.user_id) {
+    res.status(400).send("Title, content, Note Reference and user id are required to create a new note");
+    return;
+  }
+
+  try {
+    // Insertar la nueva nota en la base de datos
+    const resultId = await noteModel.createNewNote(newNote);
+
+    // Devolver el id de la nota como parte de la respuesta
+    res.status(200).json({
+      message: "Note created successfully",
+      noteId: resultId
+    });
+
+  } catch (err) {
+    console.error(`Something went wrong trying to insert a document: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+});
+
+
 router.put("/:id/edit", async function (req, res, next) {
   var updatedNote = req.body;
   var noteId = req.params.id;
   // var findQuery = { _id: new ObjectId(noteId) };
   var updateQuery = { $set: req.body };
-
+  if(!req.session.user_id){
+    return res.status(401).send("User is not signed in")
+  }
   if (
     !updatedNote ||
     !updatedNote.title ||
@@ -132,8 +269,62 @@ router.put("/:id/edit", async function (req, res, next) {
     return;
   }
   try {
-    //const currentNote = await noteModel.getNoteById(noteId);
     const currentNote = await noteModel.getNoteById(noteId, req.session.user_id);
+    if (!currentNote) {
+      res.status(404).json({
+        message: "Note not found"
+      });
+      return;
+    }
+    if (req.session.user_id !== currentNote.user_id && (currentNote.editors && !currentNote.editors.includes(req.session.user_id))) {
+      console.log("Session user id:", req.session.user_id);
+      console.log("note user id:", currentNote.user_id);
+      res.status(403).json({
+        message: "You are not allowed to update this note"
+      });
+      return;
+    }
+  } catch (err) {
+    console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+  try {
+    await noteModel.updateNoteById(noteId, updateQuery);
+
+    console.log('Document updated');
+    res.status(200).json({
+      message: "Note updated successfully"
+    });
+  } catch (err) {
+    console.error(`Something went wrong trying to update one document: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+});
+
+router.put("/:id/edit_admin", async function (req, res, next) {
+  var updatedNote = req.body;
+  var noteId = req.params.id;
+  // var findQuery = { _id: new ObjectId(noteId) };
+  var updateQuery = { $set: req.body };
+  if(!req.session.user_id){
+    return res.status(401).send("User is not signed in")
+  }
+  if(!req.session.role || req.session.role !== 'a'){
+    return res.status(403).send("User must be admin to edit users")
+  }
+  if (
+    !updatedNote ||
+    !updatedNote.title ||
+    !updatedNote.content ||
+    !updatedNote.user_id
+  ) {
+    res
+      .status(400)
+      .send("Title, content and user_id are required to update a note");
+    return;
+  }
+  try {
+    const currentNote = await noteModel.getNoteById(noteId, updatedNote.user_id);
     if (!currentNote) {
       res.status(404).json({
         message: "Note not found"
@@ -167,38 +358,91 @@ router.put("/:id/edit", async function (req, res, next) {
 
 router.delete("/:id/delete", async function (req, res, next) {
   var noteId = req.params.id;
-  try {
-    //const currentNote = await noteModel.getNoteById(noteId);
-    const currentNote = await noteModel.getNoteById(noteId, req.session.user_id);
-
-    if (!currentNote) {
-      res.status(404).json({
-        message: "Note not found"
-      });
-      return;
-    }
-    if (req.session.user_id !== currentNote.user_id) {
-      res.status(403).json({
-        message: "You are not allowed to delete this note"
-      });
-      return;
-    }
-
-  } catch (err) {
-    console.error(`Something went wrong trying to get one document to delete it: ${err}\n`);
-    res.status(500).send("Internal server error");
+  if (!noteId) {
+    res.status(400).json({ message: "Note ID is required to delete a note" });
+    return;
   }
+  if (!req.session.user_id) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+
   try {
     // const db = await database.connectToServer();
     // db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
-    await noteModel.deleteNoteById(noteId);
+    await noteModel.deleteNoteById(noteId, req.session.user_id, req.session.role);
     console.log("Note deleted successfully");
     res.status(200).json({
       message: "Note deleted successfully"
     });
   } catch (err) {
-    console.error(`Something went wrong trying to delete a document: ${err}\n`);
-    res.status(500).send("Internal server error");
+    if(err.message === "Note not found"){
+      res.status(404).json({
+        message: "Note not found"
+      });
+    }else if(err.message === "User notes not found"){
+      res.status(404).json({
+        message: "User notes not found"
+      });
+    }
+    else if(err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).json({
+        message: "Invalid note ID"
+      });
+    }else if(err.message === "User does not have access to this note"){
+      res.status(403).json({
+        message: "User does not have access to this note"
+      });
+    }else{
+      console.error(`Error al buscar la nota por ID: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
+  }
+});
+
+router.delete("/:id/delete_admin", async function (req, res, next) {
+  var noteId = req.params.id;
+  if (!noteId) {
+    res.status(400).json({ message: "Note ID is required to delete a note" });
+    return;
+  }
+  if (!req.session.user_id) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+  if(!req.session.role || req.session.role !== 'a'){
+    return res.status(403).send("User must be admin to edit users")
+  }
+  try {
+    // const db = await database.connectToServer();
+    // db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
+    await noteModel.deleteNoteById(noteId, req.session.user_id, req.session.role);
+    console.log("Note deleted successfully");
+    res.status(200).json({
+      message: "Note deleted successfully"
+    });
+  } catch (err) {
+    if(err.message === "Note not found"){
+      res.status(404).json({
+        message: "Note not found"
+      });
+    }else if(err.message === "User notes not found"){
+      res.status(404).json({
+        message: "User notes not found"
+      });
+    }
+    else if(err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).json({
+        message: "Invalid note ID"
+      });
+    }else if(err.message === "User does not have access to this note"){
+      res.status(403).json({
+        message: "User does not have access to this note"
+      });
+    }else{
+      console.error(`Error al buscar la nota por ID: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
   }
 });
 
@@ -227,38 +471,38 @@ router.post("/setSharing", async function (req, res, next) {
     !request.noteId ||
     !request.accessMode ||
     !request.isAnswer
-  ) {
-    res
-      .status(400)
-      .send("userId, noteId and accessMode are required to share a note");
-    return;
-  }
-  if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
+ ) {
+   res
+     .status(400)
+     .send("userId, noteId and accessMode are required to share a note");
+   return;
+ }
+ if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
     res
       .status(400)
       .send("accessMode must be 'r', 'w' or 'n'");
     return;
-  }
-  try {
-    await noteModel.setSharing(request.noteId, request.userId, user_id, request.accessMode, request.isAnswer, userModel.checkFriendship, notificationModel.createNotification);
-    res.status(200).json({
-      message: "Note shared successfully"
+ }
+ try{
+  await noteModel.setSharing(request.noteId, request.userId, user_id, request.accessMode, request.isAnswer, userModel.checkFriendship, notificationModel.createNotification);
+  res.status(200).json({
+    message: "Note shared successfully"
+  });
+ }catch(err){
+  if(err.message === "Note not found"){
+    res.status(404).json({
+      message: "Note not found"
     });
-  } catch (err) {
-    if (err.message === "Note not found") {
-      res.status(404).json({
-        message: "Note not found"
-      });
-    } else if (err.message === "User is not friend of the owner") {
-      res.status(403).json({
-        message: "User is not friend of the owner"
-      });
-    }
-    else {
-      console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
-      res.status(500).send("Internal server error");
-    }
+  } else if(err.message === "User is not friend of the owner"){
+    res.status(403).json({
+      message: "User is not friend of the owner"
+    });
   }
+  else{
+    console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
+    res.status(500).send("Internal server error");
+  }
+ }
 });
 
 router.get("/getAccessUser/:id", async function (req, res, next) {
@@ -274,14 +518,14 @@ router.get("/getAccessUser/:id", async function (req, res, next) {
     const access = await noteModel.getAccessUser(noteId, userId);
 
     // Devolver la nota encontrada
-    res.status(200).json({ "access_mode:": access });
+    res.status(200).json({"access_mode:": access});
 
   } catch (err) {
-    if (err.message === "Note not found") {
+    if(err.message === "Note not found"){
       res.status(404).json({
         message: "Note not found"
       });
-    } else {
+    } else{
       console.error(`Error al buscar las notas del usuario: ${err}`);
       res.status(500).send("Error interno del servidor");
     }
@@ -304,7 +548,7 @@ router.get("/getSharedNotes/:ownerId", async function (req, res, next) {
     res.status(200).json(sharedNotes);
 
   } catch (err) {
-    if (err.message === "User is not friend of the owner") {
+    if(err.message === "User is not friend of the owner"){
       res.status(403).json({
         message: "User is not friend of the owner"
       });
@@ -318,9 +562,9 @@ router.get("/getSharedNotes/:ownerId", async function (req, res, next) {
       res.status(404).json({
         message: "User not found"
       });
-
+    
     }
-    else {
+    else{
       console.error(`Error al buscar las notas del usuario: ${err}`);
       res.status(500).send("Error interno del servidor");
     }
@@ -350,40 +594,40 @@ router.post("/requestSharing", async function (req, res, next) {
     !request ||
     !request.noteId ||
     !request.accessMode
-  ) {
-    res
-      .status(400)
-      .send("noteId and accessMode are required to request share a note");
-    return;
-  }
-  if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
+ ) {
+   res
+     .status(400)
+     .send("noteId and accessMode are required to request share a note");
+   return;
+ }
+ if (request.accessMode !== "r" && request.accessMode !== "w" && request.accessMode !== "n") {
     res
       .status(400)
       .send("accessMode must be 'r', 'w' or 'n'");
     return;
+ }
+ try{
+  const sharingRequest = await noteModel.sharingRequest(user_id, request.noteId, request.accessMode, userModel.checkFriendship, notificationModel.createNotification);
+  res.status(200).json(sharingRequest);
+ }catch(err){
+  if(err.message === "Note not found"){
+    res.status(404).json({
+      message: "Note not found"
+    });
+  } else if(err.message === "User is not friend of the owner"){
+    res.status(403).json({
+      message: "User is not friend of the owner"
+    });
+  } else if(err.message === "User already has the requested access mode"){
+    res.status(400).json({
+      message: "User already has the requested access mode"
+    });
   }
-  try {
-    const sharingRequest = await noteModel.sharingRequest(user_id, request.noteId, request.accessMode, userModel.checkFriendship, notificationModel.createNotification);
-    res.status(200).json(sharingRequest);
-  } catch (err) {
-    if (err.message === "Note not found") {
-      res.status(404).json({
-        message: "Note not found"
-      });
-    } else if (err.message === "User is not friend of the owner") {
-      res.status(403).json({
-        message: "User is not friend of the owner"
-      });
-    } else if (err.message === "User already has the requested access mode") {
-      res.status(400).json({
-        message: "User already has the requested access mode"
-      });
-    }
-    else {
-      console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
-      res.status(500).send("Internal server error");
-    }
-  }
+  else{
+    console.error(`Something went wrong trying to get one document to update it: ${err}\n`);
+    res.status(500).send("Internal server error");
+ }
+}
 });
 
 router.get("/getAccessUsers/:noteId", async function (req, res, next) {
@@ -402,11 +646,11 @@ router.get("/getAccessUsers/:noteId", async function (req, res, next) {
     res.status(200).json(access);
 
   } catch (err) {
-    if (err.message === "Note not found") {
+    if(err.message === "Note not found"){
       res.status(404).json({
         message: "Note not found"
       });
-    } else {
+    } else{
       console.error(`Error al buscar las notas del usuario: ${err}`);
       res.status(500).send("Error interno del servidor");
     }

@@ -4,7 +4,6 @@ const userModel = require("../model/userModel");
 const { ObjectId } = require('mongodb');
 
 class notificationModel{
-    
     async createNotification(data){
         try{
             const db = await database.connectToServer();
@@ -47,16 +46,28 @@ class notificationModel{
             note = await noteModel.getNoteById(data.note_id, data.sender_id);
         }
         if(data.type === "s"){
-            message = user.userName + " wants you to share the note: " + note.title + " with him/her";
+            if(data.access_mode === "r"){
+                message = user.userName + " wants you to share the reading permission note: " + note.title + " with him/her";
+            } else if(data.access_mode === "w"){
+                message = user.userName + " wants you to share the writing permission note: " + note.title + " with him/her";
+            }
             console.log(message);
         }else if(data.type === "f"){
             message = user.userName + " wants to be your friend";
         }else if(data.type === "as"){
-            message = user.userName + " accepted your sharing request for the note: " + note.title;
+            if(data.access_mode === "r"){
+                message = user.userName + " accepted your sharing request for the reading permission of the note: " + note.title;
+            }else if(data.access_mode === "w"){
+                message = user.userName + " accepted your sharing request for the writing permission of the note: " + note.title;
+            }
         }else if(data.type === "af"){
             message = user.userName + " accepted your friend request";
         }else if(data.type === "ss"){
-            message = user.userName + " shared the note: " + note.title + " with you";
+            if(data.access_mode === "r"){
+                message = user.userName + " shared the reading permission note: " + note.title + " with you";
+            }else if(data.access_mode === "w"){
+                message = user.userName + " shared the writing permission note: " + note.title + " with you";
+            }
         }
         return message;
     }

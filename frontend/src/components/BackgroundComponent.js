@@ -29,6 +29,7 @@ const BackgroundComponent = ({ children }) => {
         }
         if (response.data.role === 'a') {
           setIsAdmin(true);
+          navigate('/usersManagement');
         }
       } catch (error) {
         console.error('Error fetching profile:', error);

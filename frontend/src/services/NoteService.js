@@ -48,6 +48,18 @@ class NoteService {
         return axios.post(USER_BASE_REST_API_URL + '/requestSharing', { noteId: noteId, accessMode: accessMode }, { withCredentials: true });
     }
 
+    getNotesUserAdmin(userId) {
+        return axios.get(USER_BASE_REST_API_URL + '/getUserNotesAdmin/' + userId, {withCredentials: true});
+    }
+
+    getByIdAdmin(noteId) {
+        return axios.get(USER_BASE_REST_API_URL + '/getByIdAdmin?id=/' + noteId, {withCredentials: true});
+    }
+
+    create_admin(note) {
+        return axios.post(USER_BASE_REST_API_URL + '/create_admin', note, {withCredentials: true});
+    }
+
 }
 
 const NoteServiceInstance = new NoteService();

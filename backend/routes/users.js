@@ -8,22 +8,14 @@ var router = express.Router();
 
 /* GET users listing. */
 router.get('/', async function(req, res, next) {
-  console.log("GET /users")
-  const arrayUsers = await userModel.getAllUsers();
-  res.json(arrayUsers);
-});
-
-router.get("/checkSession", function (req, res) {
-  // Verificar si hay una sesión activa para el usuario actual
-  const isUserAuthenticated = req.session.user_id ? true : false;
-
-  // Si no hay una sesión activa, devolver un código de estado 401
-  if (!isUserAuthenticated) {
-      return res.status(401).json({ error: "Unauthorized - No session" });
+  if (!req.session.user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
   }
-
-  // Devolver un objeto JSON con el estado de la sesión
-  res.status(200).json({ authenticated: isUserAuthenticated });
+  if (req.session.role !== "a") {
+    return res.status(403).json({ error: "User is not an admin" });
+  }
+  const arrayUsers = await userModel.getAllUsers();
+  return res.json(arrayUsers);
 });
 
 router.put("/login", async function (req, res, next) { //REVISAR
@@ -50,14 +42,17 @@ router.put("/login", async function (req, res, next) { //REVISAR
 
     req.session.user_id = user._id;
     req.session.register = true;
+    req.session.role = user.role;
 
     return res.status(200).json({ "httpId": httpId });
   } catch (err) {
     if (err.message === "User not found") {
       return res.status(404).json({ error: "User not found" });
     }
-    console.error(`Error signing in: ${err}`);
-    return res.status(500).json({ error: "Internal server error" });
+    else{
+      console.error(`Error signing in: ${err}`);
+      return res.status(500).json({ error: "Internal server error" });
+    }
   }
 });
 
@@ -65,10 +60,12 @@ router.get("/getProfile", async function (req, res, next) {
   try {
     const session = req.session;
     const registered = session.register;
+    const role = session.role;
 
     console.log("Session: ", session);
     console.log("Registered: ", registered);
     console.log("User ID: ", session.user_id);
+    console.log("Role: ", role);
 
     if (!registered) {
       return res.status(404).json({ error: "User does not have a session or is not signed up" });
@@ -78,7 +75,6 @@ router.get("/getProfile", async function (req, res, next) {
 
     if (!user_id) {
       return res.status(401).json({ error: "User is not signed in" });
-      
     }
 
     const user = await userModel.getUserById(user_id);
@@ -160,6 +156,13 @@ router.get("/getById", async function (req, res, next) {
 router.post("/create", async function (req, res, next) { 
   var newUser = req.body;
 
+  if(!req.session.user_id){
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+  if(!req.session.role || req.session.role !== 'a'){
+    return res.status(403).json({ error: "You must be an admin to create a note" })
+  }
+
   if (!newUser || !newUser.userName || !newUser.email || !newUser.password) {
     res.status(400).send("Username, email and password are required to create a new user");
     return;
@@ -177,27 +180,40 @@ router.post("/create", async function (req, res, next) {
     });
 
   } catch (err) {
-    console.error(`Something went wrong trying to insert a document: ${err}\n`);
-    res.status(500).send("Internal server error");
+    if(err.message === "Email already in use"){
+      return res.status(400).send("Email already in use")
+    }else{
+      console.error(`Something went wrong trying to insert a document: ${err}\n`);
+      res.status(500).send("Internal server error");
+    }
   }
 });
 
-router.put("/edit", async function (req, res, next) {
+router.put("/:id/edit", async function (req, res, next) {
   var updatedUser = req.body;
   var updateQuery = { $set: req.body };
 
   if (
      !updatedUser ||
-     !updatedUser._id
+     !updatedUser.userName ||
+     !updatedUser.email ||
+     !updatedUser.password
   ) {
     res
       .status(400)
-      .send("_id is required to update a user");
+      .send("userName, email and password are required to update a user");
     return;
+  }
+  if(!req.session.user_id){
+    return res.status(401).send("User is not signed in")
+  }
+  if(!req.session.role || req.session.role !== 'a'){
+    return res.status(403).send("User must be admin to edit users")
   }
 
   try{
-    await userModel.updateUserById(updatedUser.id, updateQuery);
+    newUser.password = crypto.createHash('sha256').update(newUser.password).digest('hex');
+    await userModel.updateUserById(req.params.id, updateQuery);
     console.log('Document updated');
     res.status(200).json({
       message: "User updated successfully"
@@ -219,15 +235,29 @@ router.delete("/delete", async function (req, res, next) {
      .send("ID is required to delete a user");
    return;
  }
+ if(!req.session.user_id){
+  return res.status(401).send("User is not signed in")
+ }
+ if(req.session.user_id === user.id || req.session.role === 'a'){
   try{
     await userModel.deleteUserById(user.id);
     console.log("User deleted successfully");
     res.status(200).json({
       message: "User deleted successfully"
     });
+    return;
   }catch (err) {
-    console.error(`Something went wrong trying to delete a document: ${err}\n`);
-    res.status(500).send("Internal server error");
+    if(err.message === "User not found"){
+      res.status(404).send("User not found");
+      return;
+    }else{
+      console.error(`Something went wrong trying to delete a document: ${err}\n`);
+      res.status(500).send("Internal server error");
+      return
+    }
+  }
+  }else{
+    return res.status(403).send("You must be admin or the selected user to delete it")
   }
 });
 

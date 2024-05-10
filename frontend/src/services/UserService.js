@@ -9,7 +9,7 @@ class UserService {
     }
 
     getUsers() {
-        return axios.get(USER_BASE_REST_API_URL);
+        return axios.get(USER_BASE_REST_API_URL, {withCredentials: true});
     }
 
     createUser(newNote) {
