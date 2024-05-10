@@ -189,17 +189,19 @@ router.post("/create", async function (req, res, next) {
   }
 });
 
-router.put("/edit", async function (req, res, next) {
+router.put("/:id/edit", async function (req, res, next) {
   var updatedUser = req.body;
   var updateQuery = { $set: req.body };
 
   if (
      !updatedUser ||
-     !updatedUser._id
+     !updatedUser.userName ||
+     !updatedUser.email ||
+     !updatedUser.password
   ) {
     res
       .status(400)
-      .send("_id is required to update a user");
+      .send("userName, email and password are required to update a user");
     return;
   }
   if(!req.session.user_id){
@@ -210,7 +212,7 @@ router.put("/edit", async function (req, res, next) {
   }
 
   try{
-    await userModel.updateUserById(updatedUser.id, updateQuery);
+    await userModel.updateUserById(req.params.id, updateQuery);
     console.log('Document updated');
     res.status(200).json({
       message: "User updated successfully"
