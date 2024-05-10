@@ -10,8 +10,16 @@ const e = require("express");
 
 router.get("/", async function (req, res, next) {
   console.log("GET /notes")
+  if (!req.session.user_id) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+  if (req.session.role !== "a") {
+    res.status(403).json({ message: "User is not an admin" });
+    return;
+  }
   const arrayNotes = await noteModel.getAllNotes();
-  res.json(arrayNotes);
+  return res.json(arrayNotes);
 });
 
 // Endpoint para obtener una nota por su ID
@@ -36,18 +44,22 @@ router.get("/getById", async function (req, res, next) {
       res.status(404).json({
         message: "Note not found"
       });
+      return;
     }else if(err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
       res.status(400).json({
         message: "Invalid note ID"
       });
+      return;
     }else if(err.message === "User does not have access to this note"){
       res.status(403).json({
         message: "User does not have access to this note"
       });
+      return;
 
     }else{
       console.error(`Error al buscar la nota por ID: ${err}`);
       res.status(500).send("Error interno del servidor");
+      return;
     }
 
   }
@@ -133,7 +145,7 @@ router.put("/:id/edit", async function (req, res, next) {
     return;
   }
   try {
-    const currentNote = await noteModel.getNoteById(noteId);
+    const currentNote = await noteModel.getNoteById(noteId, req.session.user_id);
     if (!currentNote) {
       res.status(404).json({
         message: "Note not found"
@@ -167,35 +179,45 @@ router.put("/:id/edit", async function (req, res, next) {
 
 router.delete("/:id/delete", async function (req, res, next) {
   var noteId = req.params.id;
-  try {
-    const currentNote = await noteModel.getNoteById(noteId);
-    if (!currentNote) {
-      res.status(404).json({
-        message: "Note not found"
-      });
-      return;
-    }
-    if (req.session.user_id !== currentNote.user_id) {
-      res.status(403).json({
-        message: "You are not allowed to delete this note"
-      });
-      return;
-    }
-  } catch (err) {
-    console.error(`Something went wrong trying to get one document to delete it: ${err}\n`);
-    res.status(500).send("Internal server error");
+  if (!noteId) {
+    res.status(400).json({ message: "Note ID is required to delete a note" });
+    return;
   }
+  if (!req.session.user_id) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+
   try {
     // const db = await database.connectToServer();
     // db.collection("Notes").deleteOne({ _id: new ObjectId(noteId) });
-    await noteModel.deleteNoteById(noteId);
+    await noteModel.deleteNoteById(noteId, req.session.user_id, req.session.role);
     console.log("Note deleted successfully");
     res.status(200).json({
       message: "Note deleted successfully"
     });
   } catch (err) {
-    console.error(`Something went wrong trying to delete a document: ${err}\n`);
-    res.status(500).send("Internal server error");
+    if(err.message === "Note not found"){
+      res.status(404).json({
+        message: "Note not found"
+      });
+    }else if(err.message === "User notes not found"){
+      res.status(404).json({
+        message: "User notes not found"
+      });
+    }
+    else if(err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).json({
+        message: "Invalid note ID"
+      });
+    }else if(err.message === "User does not have access to this note"){
+      res.status(403).json({
+        message: "User does not have access to this note"
+      });
+    }else{
+      console.error(`Error al buscar la nota por ID: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
   }
 });
 

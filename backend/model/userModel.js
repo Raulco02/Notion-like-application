@@ -66,7 +66,11 @@ class userModel {
         }
     
         // Eliminar usuario
-        await db.collection("Users").deleteOne({ _id: new ObjectId(userId) });
+        try{
+            await db.collection("Users").deleteOne({ _id: new ObjectId(userId) });
+        }catch(err){
+            throw new Error("User not found");
+        }
     }
 
     async login(email, password) {

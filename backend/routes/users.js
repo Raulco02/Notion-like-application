@@ -8,9 +8,14 @@ var router = express.Router();
 
 /* GET users listing. */
 router.get('/', async function(req, res, next) {
-  console.log("GET /users")
+  if (!req.session.user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+  if (req.session.role !== "a") {
+    return res.status(403).json({ error: "User is not an admin" });
+  }
   const arrayUsers = await userModel.getAllUsers();
-  res.json(arrayUsers);
+  return res.json(arrayUsers);
 });
 
 router.put("/login", async function (req, res, next) { //REVISAR
@@ -37,6 +42,7 @@ router.put("/login", async function (req, res, next) { //REVISAR
 
     req.session.user_id = user._id;
     req.session.register = true;
+    req.session.role = user.role;
 
     return res.status(200).json({ "httpId": httpId });
   } catch (err) {
@@ -52,10 +58,12 @@ router.get("/getProfile", async function (req, res, next) {
   try {
     const session = req.session;
     const registered = session.register;
+    const role = session.role;
 
     console.log("Session: ", session);
     console.log("Registered: ", registered);
     console.log("User ID: ", session.user_id);
+    console.log("Role: ", role);
 
     if (!registered) {
       return res.status(404).json({ error: "User does not have a session or is not signed up" });
