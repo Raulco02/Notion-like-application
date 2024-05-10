@@ -5,11 +5,11 @@ const USER_BASE_REST_API_URL = "http://localhost:3001/users";
 
 class UserService {
     checkSession() {
-        return axios.get(USER_BASE_REST_API_URL + '/checkSession', {withCredentials: true});
+        return axios.get(USER_BASE_REST_API_URL + '/checkSession', { withCredentials: true });
     }
 
     getUsers() {
-        return axios.get(USER_BASE_REST_API_URL, {withCredentials: true});
+        return axios.get(USER_BASE_REST_API_URL, { withCredentials: true });
     }
 
     createUser(newNote) {
@@ -28,22 +28,34 @@ class UserService {
         return axios.delete(`${USER_BASE_REST_API_URL}/${id}/delete`);
     }
 
-    login(credentials){
-        return axios.put(USER_BASE_REST_API_URL + '/login', credentials, {withCredentials: true});
+    login(credentials) {
+        return axios.put(USER_BASE_REST_API_URL + '/login', credentials, { withCredentials: true });
     }
 
-    register(user){
+    register(user) {
         console.log(user);
-        return axios.post(USER_BASE_REST_API_URL + '/register', user, {withCredentials: true});
+        return axios.post(USER_BASE_REST_API_URL + '/register', user, { withCredentials: true });
     }
 
-    getProfile(){
-        return axios.get(USER_BASE_REST_API_URL + '/getProfile', {withCredentials: true});
+    getProfile() {
+        return axios.get(USER_BASE_REST_API_URL + '/getProfile', { withCredentials: true });
     }
-    
-    logout(){
-        return axios.post(USER_BASE_REST_API_URL + '/logout', {withCredentials: true});
+
+    logout() {
+        return axios.post(USER_BASE_REST_API_URL + '/logout', { withCredentials: true });
     }
+
+    create(user) {
+        return axios.post(USER_BASE_REST_API_URL + '/create', user, { withCredentials: true });
+    }
+
+    deleteUser(id) {
+        return axios.delete(USER_BASE_REST_API_URL + '/delete', {
+            data: { id:id }, // Aquí se proporciona el ID del usuario en el cuerpo de la solicitud
+            withCredentials: true
+        });
+    }
+
 
 }
 

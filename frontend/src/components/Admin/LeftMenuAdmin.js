@@ -5,13 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { TreeItem2 } from '@mui/x-tree-view/TreeItem2';
 import { useTreeItem2Utils } from '@mui/x-tree-view/hooks/useTreeItem2Utils';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
-import { set } from 'react-hook-form';
 
-const LeftMenuAdmin = ({ reloadNotes, setReloadNotes, allUserList, actualUserNotes, setactualUserNotes, setActualNote }) => {
+const LeftMenuAdmin = ({ reloadNotes, setReloadNotes, allUserList, actualUserNotes, setactualUserNotes, setActualNote, setReloadUsers, reloadUsers, adminEmail }) => {
     const [userName, setUserName] = useState('');
     const [role, setRole] = useState('');
     const [selectedNoteId, setSelectedNoteId] = useState(null); // Estado para almacenar el ID de la nota seleccionada
-    //const [reloadActualUserNotes, setreloadActualUserNotes] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [selectedUserName, setSelectedUserName] = useState(null);
 
@@ -164,18 +162,102 @@ const LeftMenuAdmin = ({ reloadNotes, setReloadNotes, allUserList, actualUserNot
         setActualNote(note);
     };
 
+    const newUser = async () => {
+        const name = prompt('Please enter the new user\'s name:');
+        const email = prompt('Please enter the new user\'s email:');
+        const password = prompt('Please enter the new user\'s password:');
 
+        // Aquí puedes manejar los datos del nuevo usuario, como enviarlos al servidor
+        console.log('Name:', name);
+        console.log('Email:', email);
+        console.log('Password:', password);
+
+        if (name && email && password) {
+            const newUser = {
+                userName: name,
+                email: email,
+                password: password
+            };
+
+            try {
+                const response = await UserServiceInstance.create(newUser);
+                console.log('Nuevo usuario añadido:', response.data);
+                setReloadUsers(!reloadUsers); // Actualiza reloadUsers para recargar los usuarios
+            }
+            catch (error) {
+                console.error('Error fetching notes:', error);
+                checkSession(error.response);
+            }
+
+        }
+    };
+
+    const deleteUser = async () => {
+        const email = prompt('Please enter the email of the user you want to delete:');
+        if (email && email !== adminEmail) {
+            // Buscar el usuario con el correo electrónico proporcionado
+            const userToDelete = allUserList.find(user => user.email === email);
+
+            if (userToDelete) {
+                const userIdToDelete = userToDelete._id;
+                console.log(`User to delete found with ID: ${userIdToDelete}`);
+
+                try {
+                    const response = await UserServiceInstance.deleteUser(userIdToDelete);
+                    console.log('Eliminado:', response.data);
+                    setReloadUsers(!reloadUsers); // Actualiza reloadUsers para recargar los usuarios
+                }
+                catch (error) {
+                    console.error('Error fetching notes:', error);
+                    checkSession(error.response);
+                }
+
+            } else {
+                console.log('User not found with the provided email.');
+            }
+
+        }
+    };
 
     return (
         <div>
             <nav className='left-menu'>
 
-                <ul className='top-menu' style={{ maxheight: '250px', overflowY: 'scroll' }}>
+                <div style={{ margin: '0 auto' }}>
+                    <button onClick={newUser} className='aceptrejectbtn clickable' style={{ display: 'flex', alignItems: 'center', width: '200px', marginBottom: '0.5rem' }}>
+                        <img src='/new.png' alt='+' height="40px" style={{ marginRight: '0.5rem' }} />
+                        <div style={{ fontSize: '15px', color: 'white' }}>
+                            New User
+                        </div>
+                    </button>
+                </div>
+
+                <div style={{ margin: '0 auto' }}>
+                    <button onClick={deleteUser} className='aceptrejectbtn clickable' style={{ display: 'flex', alignItems: 'center', width: '200px' }}>
+                        <img src='/trash.png' alt='-' height="40px" style={{ marginRight: '0.5rem' }} />
+                        <div style={{ fontSize: '15px', color: 'white' }}>
+                            Delete User
+                        </div>
+                    </button>
+                </div>
+
+                <ul className='top-menu' style={{ maxHeight: '250px', overflowY: 'scroll' }}>
                     Users list by email
                     {allUserList.map(user => (
-                        <li onClick={() => handleUserClick(user._id, user.userName)} style={{ margin: '1rem 0', marginLeft: '1rem' }} className='clickable' key={user._id}>{user.email}</li>
+                        // Se verifica si el email es diferente al email de administrador
+                        user.email !== adminEmail && (
+                            <li
+                                onClick={() => handleUserClick(user._id, user.userName)}
+                                style={{ margin: '1rem 0', marginLeft: '1rem' }}
+                                className='clickable'
+                                key={user._id}
+                            >
+                                {user.email}
+                            </li>
+                        )
                     ))}
                 </ul>
+
 
                 <ul className='top-menu'>
 
