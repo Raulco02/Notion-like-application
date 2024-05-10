@@ -212,6 +212,7 @@ router.put("/:id/edit", async function (req, res, next) {
   }
 
   try{
+    newUser.password = crypto.createHash('sha256').update(newUser.password).digest('hex');
     await userModel.updateUserById(req.params.id, updateQuery);
     console.log('Document updated');
     res.status(200).json({

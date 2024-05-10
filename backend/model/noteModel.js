@@ -75,6 +75,17 @@ class noteModel {
     return note;
   }
 
+  async getNoteByIdAdmin(noteId) {
+    const db = await database.connectToServer();
+    const note = await db
+      .collection("Notes")
+      .findOne({ _id: new ObjectId(noteId) });
+    if (!note) {
+      throw new Error("Note not found");
+    }
+    return note;
+  }
+
   async createNewNote(newNote) {
     if (parseInt(newNote.referencedNoteId) === -1) {
       newNote.referencedNoteId = new ObjectId("000000000000000000000000");

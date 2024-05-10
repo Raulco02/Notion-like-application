@@ -25,7 +25,9 @@ router.get("/", async function (req, res, next) {
 // Endpoint para obtener una nota por su ID
 router.get("/getById", async function (req, res, next) {
   const noteId = req.query.id; // ID de la nota solicitada
-
+  if (!req.session.user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
   if (!noteId) {
     // Si no se proporciona el ID en los parámetros de consulta, devolver un mensaje de error
     res.status(400).json({ message: "Se requiere el parámetro 'id' en la URL" });
@@ -64,6 +66,55 @@ router.get("/getById", async function (req, res, next) {
 
   }
 });
+
+// Endpoint para obtener una nota por su ID
+router.get("/getByIdAdmin", async function (req, res, next) {
+  const noteId = req.query.id; // ID de la nota solicitada
+  if (!req.session.user_id) {
+    return res.status(401).json({ error: "User is not signed in" });
+  }
+  if (req.session.role !== "a") {
+    return res.status(403).json({ error: "User is not an admin" });
+  }
+  if (!noteId) {
+    // Si no se proporciona el ID en los parámetros de consulta, devolver un mensaje de error
+    res.status(400).json({ message: "Se requiere el parámetro 'id' en la URL" });
+    return;
+  }
+
+  try {
+
+    const note = await noteModel.getNoteByIdAdmin(noteId);
+
+    // Devolver la nota encontrada
+    res.status(200).json(note);
+
+  } catch (err) {
+    if(err.message === "Note not found"){
+      res.status(404).json({
+        message: "Note not found"
+      });
+      return;
+    }else if(err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"){
+      res.status(400).json({
+        message: "Invalid note ID"
+      });
+      return;
+    }else if(err.message === "User does not have access to this note"){
+      res.status(403).json({
+        message: "User does not have access to this note"
+      });
+      return;
+
+    }else{
+      console.error(`Error al buscar la nota por ID: ${err}`);
+      res.status(500).send("Error interno del servidor");
+      return;
+    }
+
+  }
+});
+
 
 router.get("/getUserNotes", async function (req, res, next) {
   const userId = req.session.user_id; // ID de la nota solicitada
