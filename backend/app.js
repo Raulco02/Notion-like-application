@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const notesRouter = require('./routes/notes');
+const notificationsRouter = require('./routes/notifications');
 
 const app = express();
 
@@ -28,12 +29,16 @@ app.use(cors({
 app.use(session({
   secret: crypto.randomBytes(32).toString('hex'), // Genera una clave secreta aleatoria
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {
+    httpOnly: false // Establece HttpOnly a false para permitir acceso desde el cliente
+  }
 }));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/notes', notesRouter);
+app.use('/notifications', notificationsRouter); 
 
 const port = process.env.PORT || 3001;
 

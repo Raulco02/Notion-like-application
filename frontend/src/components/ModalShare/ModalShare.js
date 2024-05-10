@@ -39,22 +39,11 @@ const ModalShare = ({ handleCloseModalShare, note }) => {
                 break;
         }
 
-        const response = await NoteServiceInstance.setSharing(friendId, note._id, accessMode);
+        const response = await NoteServiceInstance.setSharing(friendId, note._id, accessMode, "false");
         setReloadFriends(!reloadFriends);
     };
 
     const getFriendsWithAccess = async () => {
-
-        // const friendsWithAccessJSON = {
-        //     "friendsWA": [
-        //         {
-        //             "_id": 1,
-        //             "email": "amigo1@example.com",
-        //             "userName": "Amigo 1",
-        //             "access": "read"
-        //         }
-        //     ]
-        // }
 
         const friendsWithAccessJSON = await NoteServiceInstance.getAccessUsers(note._id);
         console.log("Los amigos con permiso son ", friendsWithAccessJSON.data);

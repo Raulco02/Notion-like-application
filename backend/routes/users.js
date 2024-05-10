@@ -1,6 +1,7 @@
 var crypto = require('crypto');
 var express = require('express');
 const userModel = require('../model/userModel');
+const { createNotification } = require('../model/notificationModel');
 var router = express.Router();
 
 //¿Controlar que el usuario sea admin para según qué acciones?¿Añadir boolean admin a session?
@@ -10,6 +11,14 @@ router.get('/', async function(req, res, next) {
   console.log("GET /users")
   const arrayUsers = await userModel.getAllUsers();
   res.json(arrayUsers);
+});
+
+router.get("/checkSession", function (req, res) {
+  // Verificar si hay una sesión activa para el usuario actual
+  const isUserAuthenticated = req.session.user_id ? true : false;
+
+  // Devolver un objeto JSON con el estado de la sesión
+  res.status(200).json({ authenticated: isUserAuthenticated });
 });
 
 router.put("/login", async function (req, res, next) { //REVISAR
@@ -64,6 +73,7 @@ router.get("/getProfile", async function (req, res, next) {
 
     if (!user_id) {
       return res.status(401).json({ error: "User is not signed in" });
+      
     }
 
     const user = await userModel.getUserById(user_id);
@@ -245,7 +255,7 @@ router.post("/friendship_request", async function (req, res, next) {
    return;
  }
   try{
-    await userModel.createFriendshipRequest(user_id, user.requestedUserEmail);
+    await userModel.createFriendshipRequest(user_id, user.requestedUserEmail, createNotification);
     console.log("Friendship request created successfully");
     res.status(200).json({
       message: "Friendship request created successfully"
@@ -343,7 +353,7 @@ router.post("/set_friendship_request", async function (req, res, next) {
     return;
   }
   try{
-    await userModel.setFriendshipRequest(user_id, user.userId, user.accepted);
+    await userModel.setFriendshipRequest(user_id, user.userId, user.accepted, createNotification);
     console.log("Friendship request set successfully");
     res.status(200).json({
       message: "Friendship request set successfully"

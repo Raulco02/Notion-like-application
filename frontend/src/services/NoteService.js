@@ -36,8 +36,8 @@ class NoteService {
         return axios.get(USER_BASE_REST_API_URL + '/getAccessUsers/' + referencedNoteId, {withCredentials: true});
     }
 
-    setSharing(userId, noteId, accessMode) {
-        return axios.post(USER_BASE_REST_API_URL + '/setSharing', { userId: userId, noteId: noteId, accessMode: accessMode }, { withCredentials: true });
+    setSharing(userId, noteId, accessMode, isAnswer) {
+        return axios.post(USER_BASE_REST_API_URL + '/setSharing', { userId: userId, noteId: noteId, accessMode: accessMode, isAnswer: isAnswer }, { withCredentials: true });
     }
 
     getSharedNotes(userId) {

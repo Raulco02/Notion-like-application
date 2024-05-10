@@ -4,6 +4,10 @@ const USER_BASE_REST_API_URL = "http://localhost:3001/users";
 
 
 class UserService {
+    checkSession() {
+        return axios.get(USER_BASE_REST_API_URL + '/checkSession', {withCredentials: true});
+    }
+
     getUsers() {
         return axios.get(USER_BASE_REST_API_URL);
     }

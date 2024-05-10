@@ -10,14 +10,14 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
     const [reloadFriends, setReloadFriends] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
     const [friends, setFriends] = useState([]); // Estado para almacenar la lista de amigos
     const [filteredFriends, setFilteredFriends] = useState([]); // Estado para almacenar la lista de amigos filtrada
-    const [friendRequests, setFriendRequest] = useState([]); // Estado para almacenar la lista de solicitudes de amistad
+    //const [friendRequests, setFriendRequest] = useState([]); // Estado para almacenar la lista de solicitudes de amistad
     const [mensajeSolicitudAmistadEnviada, setMensajeSolicitudAmistadEnviada] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
         // Código que se ejecutará al montar el componente o cuando alguna de las dependencias cambie
         getfriends();
-        getfriendRequests();
+        //getfriendRequests();
 
     }, [reloadFriends]);
 
@@ -31,13 +31,13 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
 
     }
 
-    const getfriendRequests = async () => {
+    // const getfriendRequests = async () => {
 
-        const friendRequests = await FriendShipServiceInstance.getFriendShipRequests();
-        console.log("Las solicitudes son ", friendRequests.data.requests);
-        setFriendRequest(friendRequests.data.requests);
+    //     const friendRequests = await FriendShipServiceInstance.getFriendShipRequests();
+    //     console.log("Las solicitudes son ", friendRequests.data.requests);
+    //     setFriendRequest(friendRequests.data.requests);
 
-    }
+    // }
 
     const handleChangesearchFriendContent = (e) => {
         const searchTerm = e.target.value;
@@ -79,32 +79,6 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
         setHoveredFriendId(null);
     };
 
-    const declineFriendRequest = async (userId) => {
-
-        try {
-            await FriendShipServiceInstance.acceptFriendShipRequest(userId, "false");
-            setReloadFriends(!reloadFriends);
-        } catch (error) {
-            console.error('Error refusing friend request:', error);
-
-        }
-
-    }
-
-    const acceptFriendRequest = async (userId) => {
-
-        console.log("El id es " + userId);
-
-        try {
-            await FriendShipServiceInstance.acceptFriendShipRequest(userId, "true");
-            setReloadFriends(!reloadFriends);
-
-        } catch (error) {
-            console.error('Error refusing friend request:', error);
-
-        }
-
-    }
 
     const navigateFriendNotes = (friendName, friendId) => {
         navigate(`/friendNotes/${friendName}/${friendId}`);
@@ -159,36 +133,16 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
             )}
 
 
-            {friendRequests.length > 0 && (
+            {/* {friendRequests.length > 0 && (
                 <div style={{ margin: '1rem 0', fontSize: '20px' }}>
                     Friend requests:
                 </div>
-            )}
+            )} */}
+
             {/* Lista de solicitudes de amistad */}
             {/* Iterar sobre el arreglo de solicitudes de amistad y generar un div por cada solicitud */}
 
-            {friendRequests !== undefined && friendRequests.map((friendRequest) => (
-                <div key={friendRequest._id} className="friend-container" style={{ display: 'flex', margin: '1rem 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <img src="/whiteavatar.png" alt="Avatar" className="avatar" style={{ width: '50px', height: '50px' }} />
-                    </div>
-                    <div className="friend-info">
-                        <p style={{ margin: '0.5rem' }} className="name">{friendRequest.userNamename}</p>
-                        <p style={{ margin: '0.5rem' }} className="email">{friendRequest.email}</p>
-                    </div>
 
-                    <div className='aceptrejectbtn-container'>
-                        {/* Aceptar solicitud de amistad */}
-                        <button onClick={() => acceptFriendRequest(friendRequest._id)} className='aceptrejectbtn'>
-                            <img src="/accept.png" alt="Accept" className="accept" style={{ width: '30px', height: '30px' }} />
-                        </button>
-                        {/* Rechazar solicitud de amistad */}
-                        <button onClick={() => declineFriendRequest(friendRequest._id)} className='aceptrejectbtn'>
-                            <img src="/decline.png" alt="Reject" className="reject" style={{ width: '30px', height: '30px' }} />
-                        </button>
-                    </div>
-                </div>
-            ))}
 
             {friends.length > 0 ? (
                 <div style={{ margin: '1rem 0', fontSize: '20px' }}>
@@ -224,7 +178,10 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
 
                     {hoveredFriendId === friend._id && (
                         <div className='delete-friend-container'>
-                            <button onClick={() => deleteFriend(friend._id)} className='aceptrejectbtn'>
+                            <button onClick={(event) => {
+                                event.stopPropagation(); // Evita la propagación del clic
+                                deleteFriend(friend._id);
+                            }} className='aceptrejectbtn'>
                                 <img src="/bin.png" alt="Remove" className="delete-friend-image" style={{ width: '30px', height: '30px' }} />
                             </button>
                         </div>

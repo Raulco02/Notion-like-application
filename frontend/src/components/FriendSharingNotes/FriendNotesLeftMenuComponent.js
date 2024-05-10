@@ -80,7 +80,7 @@ const FriendNotesLeftMenuComponent = ({ reloadNotes, setReloadNotes, friendId, f
 
     const returnMyNotes = () => {
         navigate('/noteMenu');
-        
+
     };
 
     const renderSubNotes = (subNotes) => {
@@ -112,7 +112,7 @@ const FriendNotesLeftMenuComponent = ({ reloadNotes, setReloadNotes, friendId, f
 
                 <ul className='top-menu'>
 
-                    <li className='clickable' style={{marginBottom:'1.5rem'}}>
+                    <li className='clickable' style={{ marginBottom: '1.5rem' }}>
                         <span onClick={returnMyNotes} style={{ display: 'flex', flexDirection: 'row' }}>
                             <img alt='My notes' src='/home.png' height="40px" style={{ marginRight: '0.5rem' }} />
                             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -124,6 +124,13 @@ const FriendNotesLeftMenuComponent = ({ reloadNotes, setReloadNotes, friendId, f
                     <li>
                         {friendName && (<span ><strong>{friendName}'s shared notes</strong></span>)}
                     </li>
+
+                    {friendName && notes.length === 0 && (
+                        <li>
+                            <span>No shared notes</span>
+
+                        </li>
+                    )}
 
                     <SimpleTreeView style={{ width: '100%', padding: '0' }}>
                         {notes.map(note => (

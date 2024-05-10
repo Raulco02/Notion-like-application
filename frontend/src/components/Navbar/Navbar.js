@@ -3,12 +3,55 @@ import './Navbar.css'; // Importa el archivo CSS para aplicar estilos al navbar
 import { useNavigate } from 'react-router-dom'; // Importa el hook useNavigate para redirigir a otras páginas
 import UserServiceInstance from '../../services/UserService'; // Importa el servicio UserService para hacer logout
 import ModalFriendships from './ModalFiendships/ModalFriendships'; // Importa el componente ModalFriendships
+import ModalNotifications from './ModalNotifications/ModalNotifications';
+import NotificationsServiceInstance from '../../services/NotificationsService';
+import FriendShipServiceInstance from '../../services/FriendShipService';
 
 function Navbar({ isAdmin }) {
   const navigate = useNavigate(); // Inicializa el hook useNavigate
   const [isModalFriendsOpen, setIsModalFriendsOpen] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
   const [isModalNotificationsOpen, setIsModalNotificationsOpen] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
+  const [isNotifications, setisNotifications] = useState(false); // Estado para controlar si hay notificaciones
+  const [reloadNotifications, setReloadNotifications] = useState(false);
+  const [friendRequests, setFriendRequest] = useState([]); // Estado para almacenar la lista de solicitudes de amistad
+  const [notifications, setNotifications] = useState([]); 
 
+  useEffect(() => {
+    getNotifications();
+    getfriendRequests();
+  }, [reloadNotifications]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setReloadNotifications(prevState => !prevState);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const getfriendRequests = async () => {
+
+    const friendRequests = await FriendShipServiceInstance.getFriendShipRequests();
+    console.log("Las solicitudes son ", friendRequests.data.requests);
+    if (friendRequests.data.requests.length > 0) {
+      setisNotifications(true);
+    }
+    setFriendRequest(friendRequests.data.requests);
+
+  }
+
+  const getNotifications = async () => {
+    const response = await NotificationsServiceInstance.getNotifications();
+    console.log("Las notificaciones son ", response.data);
+    setNotifications(response.data);
+
+    if (response.data.length > 0) {
+      setisNotifications(true);
+    }
+    else {
+      setisNotifications(false);
+    }
+  }
 
   const handleClickUsers = () => {
     navigate('/usersManagement');
@@ -17,7 +60,8 @@ function Navbar({ isAdmin }) {
   const handleClickLogout = () => {
     sessionStorage.removeItem('httpId'); //No parece que funcione, lo sigue mandando
     // Eliminar la cookie "connect.sid"
-        
+    document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    
     async function logout() {
       try {
         const response = await UserServiceInstance.logout();
@@ -80,15 +124,20 @@ function Navbar({ isAdmin }) {
 
         <div className='notifications-container'>
           <button onClick={handleOpenModalNotifications} className="navbar-button">
-            <img src="/notification-disabled.png" alt="Notifications" height='30px' />
+            <img src={isNotifications ? "/notification.png" : "/notification-disabled.png"} alt="Notifications" height='30px' />
           </button>
 
           {/* modal notificaciones */}
           {isModalNotificationsOpen && (
-            <div className="modal-notifications">
-              <span className="close" onClick={handleCloseModalNotifications}>&times;</span>
-              <p>Contenido de la ventana modal notificaciones.</p>
-            </div>
+            <ModalNotifications
+              handleCloseModalNotifications={handleCloseModalNotifications}
+              friendRequests={friendRequests}
+              FriendShipServiceInstance={FriendShipServiceInstance}
+              reloadFriends={reloadNotifications}
+              setReloadFriends={setReloadNotifications}
+              notifications={notifications}
+              NotificationsServiceInstance={NotificationsServiceInstance}
+            />
           )}
 
         </div>
