@@ -1,4 +1,6 @@
 import React from 'react';
+import NoteServiceInstance from '../../../services/NoteService';
+import './ModalNotifications.css';
 
 const ModalNotifications = ({ handleCloseModalNotifications, friendRequests, FriendShipServiceInstance, reloadFriends, setReloadFriends, notifications, NotificationsServiceInstance }) => {
 
@@ -41,12 +43,25 @@ const ModalNotifications = ({ handleCloseModalNotifications, friendRequests, Fri
 
     }
 
+    const acceptNoteRequest = async (notificationId, userId, noteId, accessMode) => {
+        try {
+            await NoteServiceInstance.setSharing(userId, noteId, accessMode, "true");
+            setReloadFriends(!reloadFriends);
+            await NotificationsServiceInstance.deleteNotification(notificationId);
+
+        } catch (error) {
+            console.error('Error refusing friend request:', error);
+
+        }
+
+    }
+
     return (
         <div className="modal-notifications">
             <span className="close" onClick={handleCloseModalNotifications}>&times;</span>
 
             {notifications.length === 0 && friendRequests.length === 0 && (
-                <div style={{marginTop:'0.5rem', fontSize:'20px'}}>
+                <div style={{ marginTop: '0.5rem', fontSize: '20px' }}>
                     <span>You are up to date!</span>
                 </div>
 
@@ -84,15 +99,30 @@ const ModalNotifications = ({ handleCloseModalNotifications, friendRequests, Fri
 
             {notifications !== undefined && notifications.map((notification) => (
                 <div key={notification._id}>
-
                     <div className="friend-container" style={{ display: 'flex', margin: '0 0 1rem 0', padding: '0.6rem' }}>
                         {notification.message}
-                        <div className='aceptrejectbtn-container'>
-                            {/* Rechazar solicitud de amistad */}
-                            <button onClick={() => deleteNotification(notification._id)} className='aceptrejectbtn'>
-                                <img src="/decline.png" alt="Reject" className="reject" style={{ width: '30px', height: '30px' }} />
-                            </button>
-                        </div>
+
+                        {notification.type !== 's' && (
+                            <div className='aceptrejectbtn-container'>
+                                {/* Rechazar solicitud de amistad */}
+                                <button onClick={() => deleteNotification(notification._id)} className='aceptrejectbtn'>
+                                    <img src="/decline.png" alt="Reject" className="reject" style={{ width: '30px', height: '30px' }} />
+                                </button>
+                            </div>
+                        )}
+
+                        {notification.type === 's' && (
+                            <div className='aceptrejectbtn-container'>
+                                {/* Aceptar solicitud de amistad */}
+                                <button onClick={() => acceptNoteRequest(notification._id, notification.sender_id, notification.note_id, notification.access_mode)} className='aceptrejectbtn'>
+                                    <img src="/accept.png" alt="Accept" className="accept" style={{ width: '30px', height: '30px' }} />
+                                </button>
+                                {/* Rechazar solicitud de amistad */}
+                                <button onClick={() => deleteNotification(notification._id)} className='aceptrejectbtn'>
+                                    <img src="/decline.png" alt="Reject" className="reject" style={{ width: '30px', height: '30px' }} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                 </div>

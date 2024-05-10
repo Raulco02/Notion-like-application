@@ -3,7 +3,7 @@ import TextEditor from './TextEditor';
 import { useParams } from 'react-router-dom';
 import NoteServiceInstance from '../services/NoteService';
 
-const NoteManagemetComponent = ( { reloadNotes, setReloadNotes } ) => {
+const NoteManagemetComponent = ( { reloadNotes, setReloadNotes, userName, userId } ) => {
     const { noteId } = useParams();
     const [noteSelected, setNoteSelected] = useState(null);
 
@@ -25,7 +25,7 @@ const NoteManagemetComponent = ( { reloadNotes, setReloadNotes } ) => {
     return (
         <div>
             {noteSelected && (
-                <TextEditor reloadNotes={reloadNotes} setReloadNotes={setReloadNotes} noteSelected={noteSelected} />
+                <TextEditor userName={userName} userId={userId} reloadNotes={reloadNotes} setReloadNotes={setReloadNotes} noteSelected={noteSelected} />
             )}
         </div>
     );

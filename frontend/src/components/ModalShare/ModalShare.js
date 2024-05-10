@@ -6,7 +6,7 @@ import Select from '@mui/material/Select';
 import FriendShipServiceInstance from '../../services/FriendShipService';
 import NoteServiceInstance from '../../services/NoteService';
 
-const ModalShare = ({ handleCloseModalShare, note }) => {
+const ModalShare = ({ handleCloseModalShare, note, userName, userId }) => {
 
     const [friendsWithAccess, setFriendsWithAccess] = useState([]);
     const [friends, setFriends] = useState([]);
@@ -49,6 +49,20 @@ const ModalShare = ({ handleCloseModalShare, note }) => {
         console.log("Los amigos con permiso son ", friendsWithAccessJSON.data);
         setFriendsWithAccess(friendsWithAccessJSON.data);
 
+    }
+
+    const copyLinkClipboard = () => {
+        const link = "http://localhost:3002/noteFriend/" + userName + '/' + userId + '/' + note._id;
+        console.log(link);
+    
+        const el = document.createElement('textarea');
+        el.value = link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("Link copied to clipboard");
+    
     }
 
     const getFriends = async () => {
@@ -94,7 +108,15 @@ const ModalShare = ({ handleCloseModalShare, note }) => {
 
     return (
         <div className='modal-share'>
-            <span className="close" onClick={handleCloseModalShare}>&times;</span>
+
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <span className="close" onClick={handleCloseModalShare}>&times;</span>
+                <button onClick={copyLinkClipboard} className='aceptrejectbtn'>
+                    <img src="/copy.png" alt="Copy" style={{ width: '30px' }} />
+                </button>
+            </div>
+
+
             <div className='modal-share-title'>
                 Share note "{note.title}"
             </div>

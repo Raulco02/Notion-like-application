@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import ReactQuill from 'react-quill';
+import ReactQuill, { displayName } from 'react-quill';
 // Quill
 import 'react-quill/dist/quill.snow.css';
 import { useNavigate } from 'react-router-dom';
 import NoteServiceInstance from '../services/NoteService';
 import ModalShare from './ModalShare/ModalShare';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
 
-const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
+const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userId }) => {
 
 
   const navigate = useNavigate();
@@ -15,6 +18,11 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [isModalShareOpen, setIsModalShareOpen] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
   const [isWRNO, setWRNO] = useState('');
+  const [showRequestButton, setShowRequestButton] = useState(false);
+
+  const [requestAccessModeType, setrequestAccessModeType] = useState('');
+
+  const [showErrorSendingRequest, setshowErrorSendingRequest] = useState(''); //Podra ver '', 't' o 'f'
 
   useEffect(() => {
     getAccessMode();
@@ -124,10 +132,50 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
     }
   };
 
-  return (
-    <div className='text-editor' style={{ pointerEvents: isWRNO === 'r' ? 'none' : 'auto', visibility: isWRNO === 'n' ? 'hidden' : 'visible' }}>
-      <nav className='note-menu'>
+  const handleChangeAccessClick = async (event) => {
 
+    switch (event.target.value) {
+      case 'Read':
+        setrequestAccessModeType('Read');
+        setShowRequestButton(true);
+        break;
+      case 'Write':
+        setrequestAccessModeType('Write');
+        setShowRequestButton(true);
+        break;
+      case 'None':
+        setrequestAccessModeType('');
+        setShowRequestButton(false);
+        break;
+    }
+
+  };
+
+  const sendNoteRequest = async () => {
+    try {
+      let accessMode = '';
+      switch (requestAccessModeType) {
+        case 'Read':
+          accessMode = 'r';
+          break;
+        case 'Write':
+          accessMode = 'w';
+          break;
+      }
+
+      const response = await NoteServiceInstance.requestSharing(noteSelected._id, accessMode);
+      console.log('La solicitud de acceso se envió correctamente:', response.data);
+      setshowErrorSendingRequest('t');
+
+    } catch (error) {
+      console.error('Error al enviar la solicitud de acceso:', error);
+      setshowErrorSendingRequest('f');
+    }
+  }
+
+  return (
+    <div className='text-editor' style={{ pointerEvents: isWRNO === 'r' ? 'none' : 'auto' }}>
+      <nav className='note-menu' style={isWRNO !== 'o' ? { display: 'flex', flexDirection: 'column' } : {}}>
         {/* Se maneja el acceso a la nota */}
         {(isWRNO === "o" || isWRNO === "w") && (
           <>
@@ -151,6 +199,8 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
                     <ModalShare
                       handleCloseModalShare={handleCloseModalShare}
                       note={noteSelected}
+                      userName={userName}
+                      userId={userId}
                     />
                   )}
                 </div>
@@ -170,39 +220,96 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes }) => {
 
         {/* Se maneja el acceso a la nota en caso de solo lectura */}
         {isWRNO === "r" && (
-          <div style={{padding:'1.1rem', fontSize:'20px'}}>
+          <div style={{ padding: '1.1rem', fontSize: '20px' }}>
             You can only read this note
+          </div>
+        )}
+
+        {(isWRNO === "n" && showErrorSendingRequest !== 't') && (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1.1rem', fontSize: '20px' }}>
+              You don't have permissions
+            </div>
+
+            <div style={{ padding: '1.1rem', fontSize: '20px', display: 'flex', alignItems: 'center' }}>
+              Request access mode:
+
+              <FormControl sx={{ m: 1, minWidth: 120 }} style={{ margin: '0 2.5rem' }}>
+                <Select
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Without label' }}
+                  style={{ backgroundColor: 'white' }}
+                  value={requestAccessModeType}
+                  onChange={(e) => handleChangeAccessClick(e)}
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+
+                  <MenuItem value="Read">Read</MenuItem>
+
+                  <MenuItem value="Write">Write</MenuItem>
+
+                </Select>
+              </FormControl>
+
+              {showRequestButton && (
+                <button onClick={sendNoteRequest} className='aceptrejectbtn'>
+                  <img src='/enviar.png' alt='send' style={{ width: '40px' }}></img>
+                </button>
+              )}
+
+            </div>
+          </div>
+        )}
+
+        {showErrorSendingRequest === "t" && (
+          <div style={{ padding: '1rem', backgroundColor: 'green', borderRadius: '10px 10px 0 0', color: 'white', fontSize: '20px' }}>
+            Request sent
+          </div>
+        )}
+
+        {showErrorSendingRequest === "f" && (
+          <div style={{ padding: '1rem',margin:'1rem', backgroundColor: 'red', borderRadius: '10px', color: 'white', fontSize: '20px' }}>
+            Failed to submit request. You are not owner's friend
           </div>
         )}
 
       </nav>
 
-      {editingTitle ? (
-        <input
-          type="text"
-          className="note-title-editable"
-          value={title}
-          onChange={handleTitleChange}
-          onBlur={handleTitleBlur}
-          autoFocus
-        />
-      ) : (
-        <h1
-          className="note-title"
-          onClick={handleTitleClick}
-        >
-          {title}
-        </h1>
+      {isWRNO !== "n" && (
+
+        <div>
+          {editingTitle ? (
+            <input
+              type="text"
+              className="note-title-editable"
+              value={title}
+              onChange={handleTitleChange}
+              onBlur={handleTitleBlur}
+              autoFocus
+            />
+          ) : (
+            <h1
+              className="note-title"
+              onClick={handleTitleClick}
+            >
+              {title}
+            </h1>
+          )}
+
+          <ReactQuill
+            value={content}
+            theme="snow"
+            modules={modules}
+            formats={formats}
+            placeholder="Write something..."
+            onChange={handleProcedureContentChange}
+          />
+        </div>
+
       )}
 
-      <ReactQuill
-        value={content}
-        theme="snow"
-        modules={modules}
-        formats={formats}
-        placeholder="Write something..."
-        onChange={handleProcedureContentChange}
-      />
     </div>
   );
 };

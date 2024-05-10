@@ -44,6 +44,10 @@ class NoteService {
         return axios.get(USER_BASE_REST_API_URL + '/getSharedNotes/' + userId, {withCredentials: true});
     }
 
+    requestSharing(noteId, accessMode) {
+        return axios.post(USER_BASE_REST_API_URL + '/requestSharing', { noteId: noteId, accessMode: accessMode }, { withCredentials: true });
+    }
+
 }
 
 const NoteServiceInstance = new NoteService();

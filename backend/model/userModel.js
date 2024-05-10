@@ -146,9 +146,10 @@ class userModel {
             { _id: new ObjectId(userId) },
             { $pull: { friend_requests: friendId } }
         );
-
-        const notificacion = await userModel.createNotification("af", userId, friendId, null, null);
-        createNotification(notificacion);
+        if (status === "true") {
+            const notificacion = await userModel.createNotification("af", userId, friendId, null, null);
+            createNotification(notificacion);
+        }
 
         return friendId;
     }
