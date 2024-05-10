@@ -212,8 +212,13 @@ router.delete("/delete", async function (req, res, next) {
       message: "User deleted successfully"
     });
   }catch (err) {
-    console.error(`Something went wrong trying to delete a document: ${err}\n`);
-    res.status(500).send("Internal server error");
+    if(err.message === "User not found"){
+      res.status(404).send("User not found");
+      return;
+    }else{
+      console.error(`Something went wrong trying to delete a document: ${err}\n`);
+      res.status(500).send("Internal server error");
+    }
   }
 });
 

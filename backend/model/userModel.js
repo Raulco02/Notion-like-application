@@ -46,7 +46,27 @@ class userModel {
 
     async deleteUserById(userId) {
         const db = await database.connectToServer();
-        return await db.collection("Users").deleteOne({ _id: new ObjectId(userId) });
+        
+        const notes = await db.collection("Notes").find({ user_id: userId }).toArray();
+        console.log('Notes', notes);
+    
+        // Eliminar notas
+        for (const note of notes) {
+            await db.collection("Notes").deleteOne({ _id: note._id });
+        }
+    
+        // Eliminar amigos
+        const friends = await this.getFriends(userId);
+        if (friends) {
+            for (const friend of friends) {
+                await this.deleteFriend(friend._id.toString(), userId);
+            }
+        } else {
+            throw new Error("User not found");
+        }
+    
+        // Eliminar usuario
+        await db.collection("Users").deleteOne({ _id: new ObjectId(userId) });
     }
 
     async login(email, password) {
@@ -146,9 +166,10 @@ class userModel {
             { _id: new ObjectId(userId) },
             { $pull: { friend_requests: friendId } }
         );
-
-        const notificacion = await userModel.createNotification("af", userId, friendId, null, null);
-        createNotification(notificacion);
+        if (status === "true") {
+            const notificacion = await userModel.createNotification("af", userId, friendId, null, null);
+            createNotification(notificacion);
+        }
 
         return friendId;
     }
@@ -158,7 +179,7 @@ class userModel {
         const usersCollection = db.collection("Users");
         const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
         
-        if (user.friends) {
+        if (user !== null && user.friends) {
             const friendIds = user.friends.map(id => new ObjectId(id));
             const friends = await usersCollection.find(
                 { _id: { $in: friendIds } },
@@ -190,6 +211,9 @@ class userModel {
     
             return friends;
         }
+        else if(user === null){
+            throw new Error("User not found");
+        }
         
         return [];
     }
@@ -201,7 +225,7 @@ class userModel {
     
         const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
         const friend = await usersCollection.findOne({ _id: new ObjectId(friendId) });
-    
+        console.log('USER',user,'FRIEND', friend,'USERID', userId,'FRIENDID', friendId)
         if (!user || !friend) {
             throw new Error("Friend not found");
         }

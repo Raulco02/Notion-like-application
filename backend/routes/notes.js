@@ -140,7 +140,7 @@ router.put("/:id/edit", async function (req, res, next) {
       });
       return;
     }
-    if (req.session.user_id !== currentNote.user_id) {
+    if (req.session.user_id !== currentNote.user_id && (currentNote.editors && !currentNote.editors.includes(req.session.user_id))) {
       console.log("Session user id:", req.session.user_id);
       console.log("note user id:", currentNote.user_id);
       res.status(403).json({
