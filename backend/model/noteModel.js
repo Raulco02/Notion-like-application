@@ -109,8 +109,11 @@ class noteModel {
           .deleteOne({ _id: new ObjectId(noteId) });
 
       }
+      else{
+        throw new Error("User does not have access to this note");
+      }
     }else{
-      throw new Error("User does not have access to this note");
+      throw new Error("Note not found");
     }
   }
   // async deleteNoteById(noteId, userId) {
