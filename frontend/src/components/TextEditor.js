@@ -11,7 +11,6 @@ import Select from '@mui/material/Select';
 
 const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userId }) => {
 
-
   const navigate = useNavigate();
   const [title, setTitle] = useState(noteSelected.title);
   const [content, setContent] = useState(noteSelected.content);
@@ -23,6 +22,12 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userI
   const [requestAccessModeType, setrequestAccessModeType] = useState('');
 
   const [showErrorSendingRequest, setshowErrorSendingRequest] = useState(''); //Podra ver '', 't' o 'f'
+
+  const checkSession = (response) => {
+    if (response.status === 401) {
+      navigate('/');
+    }
+  }
 
   useEffect(() => {
     getAccessMode();
@@ -38,6 +43,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userI
       setWRNO(response.data['access_mode:']);
     } catch (error) {
       console.error('Error al obtener el modo de acceso:', error);
+      checkSession(error.response);
     }
   };
 
@@ -101,6 +107,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userI
 
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
+      checkSession(error.response);
     }
   };
 
@@ -112,6 +119,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userI
       navigate('/noteMenu');
     } catch (error) {
       console.error('Error al actualizar la nota:', error);
+      checkSession(error.response);
     }
   };
 
@@ -169,6 +177,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userI
 
     } catch (error) {
       console.error('Error al enviar la solicitud de acceso:', error);
+      checkSession(error.response);
       setshowErrorSendingRequest('f');
     }
   }
@@ -272,7 +281,7 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userI
         )}
 
         {showErrorSendingRequest === "f" && (
-          <div style={{ padding: '1rem',margin:'1rem', backgroundColor: 'red', borderRadius: '10px', color: 'white', fontSize: '20px' }}>
+          <div style={{ padding: '1rem', margin: '1rem', backgroundColor: 'red', borderRadius: '10px', color: 'white', fontSize: '20px' }}>
             Failed to submit request. You are not owner's friend
           </div>
         )}

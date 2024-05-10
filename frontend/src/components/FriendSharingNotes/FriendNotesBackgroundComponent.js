@@ -11,10 +11,6 @@ const FriendNotesBackgroundComponent = ({ children }) => {
     const { friendName, friendId } = useParams();
     const [isAdmin, setIsAdmin] = useState(false);
 
-    useEffect(() => {
-
-    }, []);
-
     return (
         <div className='background'>
             <div className="navbar-menu">

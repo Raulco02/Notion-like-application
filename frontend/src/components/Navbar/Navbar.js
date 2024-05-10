@@ -14,7 +14,13 @@ function Navbar({ isAdmin }) {
   const [isNotifications, setisNotifications] = useState(false); // Estado para controlar si hay notificaciones
   const [reloadNotifications, setReloadNotifications] = useState(false);
   const [friendRequests, setFriendRequest] = useState([]); // Estado para almacenar la lista de solicitudes de amistad
-  const [notifications, setNotifications] = useState([]); 
+  const [notifications, setNotifications] = useState([]);
+
+  const checkSession = (response) => {
+    if (response.status === 401) {
+      navigate('/');
+    }
+  }
 
   useEffect(() => {
     getNotifications();
@@ -31,26 +37,41 @@ function Navbar({ isAdmin }) {
 
   const getfriendRequests = async () => {
 
-    const friendRequests = await FriendShipServiceInstance.getFriendShipRequests();
-    console.log("Las solicitudes son ", friendRequests.data.requests);
-    if (friendRequests.data.requests.length > 0) {
-      setisNotifications(true);
+    try {
+      const friendRequests = await FriendShipServiceInstance.getFriendShipRequests();
+      console.log("Las solicitudes son ", friendRequests.data.requests);
+      if (friendRequests.data.requests.length > 0) {
+        setisNotifications(true);
+      }
+      setFriendRequest(friendRequests.data.requests);
     }
-    setFriendRequest(friendRequests.data.requests);
+    catch (error) {
+      checkSession(error.response);
+    }
+
+
 
   }
 
   const getNotifications = async () => {
-    const response = await NotificationsServiceInstance.getNotifications();
-    console.log("Las notificaciones son ", response.data);
-    setNotifications(response.data);
+    try {
+      const response = await NotificationsServiceInstance.getNotifications();
 
-    if (response.data.length > 0) {
-      setisNotifications(true);
+      console.log("Las notificaciones son ", response.data);
+      setNotifications(response.data);
+
+      if (response.data.length > 0) {
+        setisNotifications(true);
+      }
+      else {
+        setisNotifications(false);
+      }
     }
-    else {
-      setisNotifications(false);
+
+    catch (error) {
+      checkSession(error.response);
     }
+
   }
 
   const handleClickUsers = () => {
@@ -61,13 +82,14 @@ function Navbar({ isAdmin }) {
     sessionStorage.removeItem('httpId'); //No parece que funcione, lo sigue mandando
     // Eliminar la cookie "connect.sid"
     document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    
+
     async function logout() {
       try {
         const response = await UserServiceInstance.logout();
         console.log(response.data.message);
       } catch (error) {
         console.error('Error logging out:', error);
+        checkSession(error.response);
       }
     };
     logout();

@@ -6,8 +6,14 @@ import { useNavigate } from "react-router-dom";
 
 const MenuComponent = ({ menuItem, children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
- 
   const navigate = useNavigate();
+
+  const checkSession = (response) => {
+    if (response.status === 401) {
+      navigate('/');
+    }
+  }
+
   useEffect(() => {
     const httpId = sessionStorage.getItem("httpId");
     if (!httpId) {
@@ -21,6 +27,7 @@ const MenuComponent = ({ menuItem, children }) => {
           }
         } catch (error) {
           console.error("Error al obtener el usuario:", error);
+          checkSession(error.response);
         }
       };
       getUser();

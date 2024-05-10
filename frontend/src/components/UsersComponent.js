@@ -11,6 +11,12 @@ const UsersComponent = () => {
   const [pwd2, setPwd2] = useState([]);
   const navigate = useNavigate();
 
+  const checkSession = (response) => {
+    if (response.status === 401) {
+      navigate('/');
+    }
+  }
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -30,6 +36,7 @@ const UsersComponent = () => {
         }
       } catch (error) {
         console.error("Error al obtener las notas del usuario:", error);
+        checkSession(error.response);
       }
     };
 

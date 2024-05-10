@@ -14,6 +14,12 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
     const [mensajeSolicitudAmistadEnviada, setMensajeSolicitudAmistadEnviada] = useState('');
     const navigate = useNavigate();
 
+    const checkSession = (response) => {
+        if (response.status === 401) {
+            navigate('/');
+        }
+    }
+
     useEffect(() => {
         // Código que se ejecutará al montar el componente o cuando alguna de las dependencias cambie
         getfriends();
@@ -24,10 +30,15 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
 
     const getfriends = async () => {
 
-        const friends = await FriendShipServiceInstance.getUserFriends();
-        console.log("Los amigos son ", friends.data.friends);
-        setFriends(friends.data.friends);
-        setFilteredFriends(friends.data.friends);
+        try {
+            const friends = await FriendShipServiceInstance.getUserFriends();
+            console.log("Los amigos son ", friends.data.friends);
+            setFriends(friends.data.friends);
+            setFilteredFriends(friends.data.friends);
+        }
+        catch (error) {
+            checkSession(error.response);
+        }
 
     }
 
@@ -64,6 +75,7 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
             setMensajeSolicitudAmistadEnviada('s');
         } catch (error) {
             console.error('Error sending friend request:', error);
+            checkSession(error.response);
             setMensajeSolicitudAmistadEnviada('f');
         }
     };
@@ -92,7 +104,7 @@ const ModalFriendships = ({ handleCloseModalFriends }) => {
 
         } catch (error) {
             console.error('Error deleting friend:', error);
-
+            checkSession(error.response);
         }
 
     }

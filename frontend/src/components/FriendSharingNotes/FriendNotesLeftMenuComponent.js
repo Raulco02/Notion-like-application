@@ -13,6 +13,12 @@ const FriendNotesLeftMenuComponent = ({ reloadNotes, setReloadNotes, friendId, f
 
     const navigate = useNavigate();
 
+    const checkSession = (response) => {
+        if (response.status === 401) {
+            navigate('/');
+        }
+    }
+
     const CustomTreeItem = React.forwardRef(function MyTreeItem(props, ref) {
         const { interactions } = useTreeItem2Utils({
             itemId: props.itemId,
@@ -50,13 +56,16 @@ const FriendNotesLeftMenuComponent = ({ reloadNotes, setReloadNotes, friendId, f
         async function obtenerPerfil() {
             try {
                 const response = await UserServiceInstance.getProfile();
+
                 if (response.data.error) {
                     navigate('/');
                 }
+
                 setUserName(response.data.userName);
 
             } catch (error) {
                 console.error('Error fetching profile:', error);
+                checkSession(error.response);
             }
         }
         obtenerPerfil();
@@ -75,6 +84,7 @@ const FriendNotesLeftMenuComponent = ({ reloadNotes, setReloadNotes, friendId, f
             console.log('Notas del amigo:', response.data);
         } catch (error) {
             console.error('Error fetching notes:', error);
+            checkSession(error.response);
         }
     }
 

@@ -15,6 +15,12 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
 
   const navigate = useNavigate();
 
+  const checkSession = (response) => {
+    if (response.status === 401) {
+      navigate('/');
+    }
+  }
+
   const CustomTreeItem = React.forwardRef(function MyTreeItem(props, ref) {
     const { interactions } = useTreeItem2Utils({
       itemId: props.itemId,
@@ -60,6 +66,7 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
         console.log(role)
       } catch (error) {
         console.error('Error fetching profile:', error);
+        checkSession(error.response);
       }
     }
     obtenerPerfil();
@@ -79,6 +86,7 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
       console.log('Notas:', response.data);
     } catch (error) {
       console.error('Error fetching notes:', error);
+      checkSession(error.response);
     }
   }
 
@@ -98,6 +106,7 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
 
     } catch (error) {
       console.error('Error fetching notes:', error);
+      checkSession(error.response);
     }
   }
 
@@ -119,6 +128,7 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
 
     } catch (error) {
       console.error('Error fetching notes:', error);
+      checkSession(error.response);
     }
   };
 

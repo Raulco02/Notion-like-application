@@ -17,6 +17,11 @@ router.get("/checkSession", function (req, res) {
   // Verificar si hay una sesión activa para el usuario actual
   const isUserAuthenticated = req.session.user_id ? true : false;
 
+  // Si no hay una sesión activa, devolver un código de estado 401
+  if (!isUserAuthenticated) {
+      return res.status(401).json({ error: "Unauthorized - No session" });
+  }
+
   // Devolver un objeto JSON con el estado de la sesión
   res.status(200).json({ authenticated: isUserAuthenticated });
 });

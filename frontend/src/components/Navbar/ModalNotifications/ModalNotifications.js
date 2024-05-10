@@ -1,8 +1,16 @@
 import React from 'react';
 import NoteServiceInstance from '../../../services/NoteService';
 import './ModalNotifications.css';
+import { useNavigate } from 'react-router-dom';
 
 const ModalNotifications = ({ handleCloseModalNotifications, friendRequests, FriendShipServiceInstance, reloadFriends, setReloadFriends, notifications, NotificationsServiceInstance }) => {
+    const navigate = useNavigate();
+
+    const checkSession = (response) => {
+        if (response.status === 401) {
+            navigate('/');
+        }
+    }
 
     const acceptFriendRequest = async (userId) => {
 
@@ -14,6 +22,7 @@ const ModalNotifications = ({ handleCloseModalNotifications, friendRequests, Fri
 
         } catch (error) {
             console.error('Error refusing friend request:', error);
+            checkSession(error.response);
 
         }
 
@@ -26,7 +35,7 @@ const ModalNotifications = ({ handleCloseModalNotifications, friendRequests, Fri
             setReloadFriends(!reloadFriends);
         } catch (error) {
             console.error('Error refusing friend request:', error);
-
+            checkSession(error.response);
         }
 
     }
@@ -38,7 +47,7 @@ const ModalNotifications = ({ handleCloseModalNotifications, friendRequests, Fri
             setReloadFriends(!reloadFriends);
         } catch (error) {
             console.error('Error refusing friend request:', error);
-
+            checkSession(error.response);
         }
 
     }
@@ -51,7 +60,7 @@ const ModalNotifications = ({ handleCloseModalNotifications, friendRequests, Fri
 
         } catch (error) {
             console.error('Error refusing friend request:', error);
-
+            checkSession(error.response);
         }
 
     }

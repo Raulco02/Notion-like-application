@@ -7,6 +7,7 @@ import Login from './components/Login/Login';
 import Signup from './components/Signup/Signup';
 import UsersComponent from './components/UsersComponent';
 import FriendNotesBackgroundComponent from './components/FriendSharingNotes/FriendNotesBackgroundComponent';
+import Prueba from './components/Prueba';
 
 function App() {
   const menuItems = { "users": "users", "collections": "collections", "main": "main", "collection": "collection", "user": "user" };
@@ -23,6 +24,8 @@ function App() {
         <Route path='/user/:userId' element={<MenuComponent menuItem={menuItems.user}> <UsersComponent /> </MenuComponent>} />
         <Route path='/friendNotes/:friendName/:friendId' element={<FriendNotesBackgroundComponent> </FriendNotesBackgroundComponent>} />
         <Route path='/noteFriend/:friendName/:friendId/:noteId' element={<FriendNotesBackgroundComponent> <NoteManagemetComponent /> </FriendNotesBackgroundComponent>} />
+        <Route path='/prueba' element={<Prueba> </Prueba>} />
+
       </Routes>
     </BrowserRouter>
 

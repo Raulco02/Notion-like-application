@@ -5,6 +5,7 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import FriendShipServiceInstance from '../../services/FriendShipService';
 import NoteServiceInstance from '../../services/NoteService';
+import { useNavigate } from 'react-router-dom';
 
 const ModalShare = ({ handleCloseModalShare, note, userName, userId, reloadNotes, setReloadNotes }) => {
 
@@ -13,12 +14,19 @@ const ModalShare = ({ handleCloseModalShare, note, userName, userId, reloadNotes
     const [hoveredFriendId, setHoveredFriendId] = useState(null); // Estado para almacenar el ID del amigo sobre el que está el ratón
     const [selectedValues, setSelectedValues] = useState({});
     const [reloadFriends, setReloadFriends] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
+    const navigate = useNavigate();
+
+    const checkSession = (response) => {
+        if (response.status === 401) {
+            navigate('/');
+        }
+    }
 
     useEffect(() => {
         getFriendsWithAccess();
         getFriends();
     }, [note, reloadNotes]);
-    
+
 
     const handleChangeAccessClick = async (event, friendId) => {
 
@@ -37,24 +45,35 @@ const ModalShare = ({ handleCloseModalShare, note, userName, userId, reloadNotes
                 accessMode = 'n';
                 break;
         }
+        try {
+            const response = await NoteServiceInstance.setSharing(friendId, note._id, accessMode, "false");
+            setReloadNotes(!reloadNotes);
+        }
+        catch (error) {
+            checkSession(error.response);
+        }
 
-        const response = await NoteServiceInstance.setSharing(friendId, note._id, accessMode, "false");
-        // setReloadFriends(!reloadFriends);
-        setReloadNotes(!reloadNotes);
     };
 
     const getFriendsWithAccess = async () => {
 
-        const friendsWithAccessJSON = await NoteServiceInstance.getAccessUsers(note._id);
-        console.log("Los amigos con permiso son ", friendsWithAccessJSON.data);
-        setFriendsWithAccess(friendsWithAccessJSON.data);
+        try {
+            const friendsWithAccessJSON = await NoteServiceInstance.getAccessUsers(note._id);
+            console.log("Los amigos con permiso son ", friendsWithAccessJSON.data);
+            setFriendsWithAccess(friendsWithAccessJSON.data);
+        }
+        catch (error) {
+            checkSession(error.response);
+
+        }
+
 
     }
 
     const copyLinkClipboard = () => {
         const link = "http://localhost:3002/noteFriend/" + userName + '/' + userId + '/' + note._id;
         console.log(link);
-    
+
         const el = document.createElement('textarea');
         el.value = link;
         document.body.appendChild(el);
@@ -62,7 +81,7 @@ const ModalShare = ({ handleCloseModalShare, note, userName, userId, reloadNotes
         document.execCommand('copy');
         document.body.removeChild(el);
         alert("Link copied to clipboard");
-    
+
     }
 
     const getFriends = async () => {
@@ -90,9 +109,15 @@ const ModalShare = ({ handleCloseModalShare, note, userName, userId, reloadNotes
         //     ]
         // }
 
-        const friends = await FriendShipServiceInstance.getUserFriends();
-        console.log("Los amigos son ", friends.data.friends);
-        setFriends(friends.data.friends);
+        try {
+            const friends = await FriendShipServiceInstance.getUserFriends();
+            console.log("Los amigos son ", friends.data.friends);
+            setFriends(friends.data.friends);
+        }
+        catch (error) {
+            checkSession(error.response);
+
+        } 
 
     }
 
@@ -109,7 +134,7 @@ const ModalShare = ({ handleCloseModalShare, note, userName, userId, reloadNotes
     return (
         <div className='modal-share'>
 
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span className="close" onClick={handleCloseModalShare}>&times;</span>
                 <button onClick={copyLinkClipboard} className='aceptrejectbtn'>
                     <img src="/copy.png" alt="Copy" style={{ width: '30px' }} />
