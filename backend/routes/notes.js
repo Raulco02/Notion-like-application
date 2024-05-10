@@ -144,6 +144,39 @@ router.get("/getUserNotes", async function (req, res, next) {
   }
 });
 
+router.get("/getUserNotesAdmin/:id", async function (req, res, next) {
+  const userId = req.session.user_id; // ID de la nota solicitada
+  var referencedNoteId = req.query.referencedNoteId;
+  const id = req.params.id;
+
+  if (!userId) {
+    res.status(401).json({ message: "User is not signed in" });
+    return;
+  }
+  if (!req.session.role && req.session.role !== "a") {
+    res.status(403).json({ message: "User must be admin" });
+    return;
+  }
+
+  try {
+    userNotes = await noteModel.getUserNotes(id, referencedNoteId);
+
+    if (!userNotes) {
+      // Si no se encuentra la nota, devolver un mensaje de error
+      res.status(404).json({ message: "User notes not found" });
+      return;
+    }
+    console.log(userNotes)
+
+    // Devolver la nota encontrada
+    res.status(200).json(userNotes);
+
+  } catch (err) {
+    console.error(`Error al buscar las notas del usuario: ${err}`);
+    res.status(500).send("Error interno del servidor");
+  }
+});
+
 router.post("/create", async function (req, res, next) {
   var newNote = req.body;
 
