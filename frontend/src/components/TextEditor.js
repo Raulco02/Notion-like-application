@@ -201,6 +201,8 @@ const TextEditor = ({ noteSelected, setReloadNotes, reloadNotes, userName, userI
                       note={noteSelected}
                       userName={userName}
                       userId={userId}
+                      reloadNotes={reloadNotes}
+                      setReloadNotes={setReloadNotes}
                     />
                   )}
                 </div>

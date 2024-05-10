@@ -4,6 +4,7 @@ const userModel = require("../model/userModel");
 const { ObjectId } = require('mongodb');
 
 class notificationModel{
+    
     async createNotification(data){
         try{
             const db = await database.connectToServer();

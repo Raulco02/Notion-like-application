@@ -67,6 +67,7 @@ const LeftMenuComponent = ({ reloadNotes, setReloadNotes }) => {
 
   // Para mostrar nota cuando se hace clic
   const handleNoteClick = (noteId) => {
+    setReloadNotes(!reloadNotes);
     setSelectedNoteId(noteId);
     navigate(`/note/${noteId}`);
   };

@@ -6,7 +6,7 @@ import Select from '@mui/material/Select';
 import FriendShipServiceInstance from '../../services/FriendShipService';
 import NoteServiceInstance from '../../services/NoteService';
 
-const ModalShare = ({ handleCloseModalShare, note, userName, userId }) => {
+const ModalShare = ({ handleCloseModalShare, note, userName, userId, reloadNotes, setReloadNotes }) => {
 
     const [friendsWithAccess, setFriendsWithAccess] = useState([]);
     const [friends, setFriends] = useState([]);
@@ -15,11 +15,10 @@ const ModalShare = ({ handleCloseModalShare, note, userName, userId }) => {
     const [reloadFriends, setReloadFriends] = useState(false); // Estado para controlar la apertura y cierre de la ventana modal
 
     useEffect(() => {
-
         getFriendsWithAccess();
         getFriends();
-
-    }, [reloadFriends]);
+    }, [note, reloadNotes]);
+    
 
     const handleChangeAccessClick = async (event, friendId) => {
 
@@ -40,7 +39,8 @@ const ModalShare = ({ handleCloseModalShare, note, userName, userId }) => {
         }
 
         const response = await NoteServiceInstance.setSharing(friendId, note._id, accessMode, "false");
-        setReloadFriends(!reloadFriends);
+        // setReloadFriends(!reloadFriends);
+        setReloadNotes(!reloadNotes);
     };
 
     const getFriendsWithAccess = async () => {
