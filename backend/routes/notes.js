@@ -26,26 +26,30 @@ router.get("/getById", async function (req, res, next) {
 
   try {
 
-    const note = await noteModel.getNoteById(noteId);
-
-    if (!note) {
-      // Si no se encuentra la nota, devolver un mensaje de error
-      res.status(404).json({ message: "Note not found" });
-      return;
-    }
-    // if (req.session.user_id !== note.user_id) {
-    //   res.status(403).json({
-    //     message: "You are not allowed to see this note"
-    //   });
-    //   return;
-    // }
+    const note = await noteModel.getNoteById(noteId, req.session.user_id);
 
     // Devolver la nota encontrada
     res.status(200).json(note);
 
   } catch (err) {
-    console.error(`Error al buscar la nota por ID: ${err}`);
-    res.status(500).send("Error interno del servidor");
+    if (err.message === "Note not found") {
+      res.status(404).json({
+        message: "Note not found"
+      });
+    } else if (err.message === "input must be a 24 character hex string, 12 byte Uint8Array, or an integer") {
+      res.status(400).json({
+        message: "Invalid note ID"
+      });
+    } else if (err.message === "User does not have access to this note") {
+      res.status(403).json({
+        message: "User does not have access to this note"
+      });
+
+    } else {
+      console.error(`Error al buscar la nota por ID: ${err}`);
+      res.status(500).send("Error interno del servidor");
+    }
+
   }
 });
 
@@ -128,7 +132,8 @@ router.put("/:id/edit", async function (req, res, next) {
     return;
   }
   try {
-    const currentNote = await noteModel.getNoteById(noteId);
+    //const currentNote = await noteModel.getNoteById(noteId);
+    const currentNote = await noteModel.getNoteById(noteId, req.session.user_id);
     if (!currentNote) {
       res.status(404).json({
         message: "Note not found"
@@ -163,7 +168,9 @@ router.put("/:id/edit", async function (req, res, next) {
 router.delete("/:id/delete", async function (req, res, next) {
   var noteId = req.params.id;
   try {
-    const currentNote = await noteModel.getNoteById(noteId);
+    //const currentNote = await noteModel.getNoteById(noteId);
+    const currentNote = await noteModel.getNoteById(noteId, req.session.user_id);
+
     if (!currentNote) {
       res.status(404).json({
         message: "Note not found"
@@ -176,6 +183,7 @@ router.delete("/:id/delete", async function (req, res, next) {
       });
       return;
     }
+
   } catch (err) {
     console.error(`Something went wrong trying to get one document to delete it: ${err}\n`);
     res.status(500).send("Internal server error");

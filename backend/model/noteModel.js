@@ -9,10 +9,27 @@ class noteModel {
     return await notes.toArray();
   }
 
-  async getNoteById(noteId) {
+  async getNoteById(noteId, userId) {
     const db = await database.connectToServer();
-    return await db.collection("Notes").findOne({ _id: new ObjectId(noteId) });
-}
+    const note = await db
+      .collection("Notes")
+      .findOne({ _id: new ObjectId(noteId) });
+    if (!note) {
+      throw new Error("Note not found");
+    }
+    console.log('userId:', userId, 'note.user_id:', note.user_id);
+    if (
+      note.user_id !== userId &&
+      note.readers &&
+      !note.readers.includes(userId) &&
+      note.editors &&
+      !note.editors.includes(userId)
+    ) {
+      console.log(note.user_id)
+      throw new Error("User does not have access to this note");
+    }
+    return note;
+  }
 
   async createNewNote(newNote) {
     if (parseInt(newNote.referencedNoteId) === -1) {
@@ -153,7 +170,7 @@ class noteModel {
       // Si access_mode es "n", eliminar userId de readers y editors
       updateQuery = { $pull: { readers: userId, editors: userId } };
     }
-  
+
     // Realizar la actualización
     const updateResult = await db.collection("Notes").findOneAndUpdate(
       {
@@ -168,7 +185,7 @@ class noteModel {
     if (!updateResult) {
       throw new Error("Note not found");
     }
-  
+
     // Actualizar las subnotas directas
     const subNotes = await db
       .collection("Notes")
@@ -177,7 +194,7 @@ class noteModel {
         referencedNoteId: objectNoteId,
       })
       .toArray();
-  
+
     if (subNotes.length > 0) {
       const subNotesUpdateResult = await db.collection("Notes").updateMany(
         {
@@ -186,12 +203,12 @@ class noteModel {
         },
         updateQuery
       );
-  
+
       console.log(
         "Number of subnotes updated:",
         subNotesUpdateResult.modifiedCount
       );
-  
+
       // Función para actualizar las subnotas de manera recursiva
       async function updateSubNotes(noteId) {
         const objectNoteId = new ObjectId(noteId);
@@ -202,7 +219,7 @@ class noteModel {
             referencedNoteId: objectNoteId,
           })
           .toArray();
-  
+
         // Actualizar las subnotas, si existen
         if (subNotes.length > 0) {
           const subNotesUpdateResult = await db.collection("Notes").updateMany(
@@ -212,19 +229,19 @@ class noteModel {
             },
             updateQuery
           );
-  
+
           console.log(
             "Number of subnotes updated:",
             subNotesUpdateResult.modifiedCount
           );
-  
+
           // Llamar recursivamente para actualizar las subnotas de las subnotas
           for (const subNote of subNotes) {
             await updateSubNotes(subNote._id);
           }
         }
       }
-  
+
       // Llamar la función para actualizar las subnotas de manera recursiva
       for (const subNote of subNotes) {
         await updateSubNotes(subNote._id);
@@ -426,7 +443,7 @@ class noteModel {
     permissionNotes.forEach((note) => {
       // Encontrar el padre con permisos en rootNotes
       const parentNote = permissionNotesMap[note.referencedNoteId];
-      if(note._id.equals(new ObjectId("663b85671213c0bcfc5bf15c")))
+      if (note._id.equals(new ObjectId("663b85671213c0bcfc5bf15c")))
         console.log(note, parentNote)
       if (parentNote) {
         if (!parentNote.subNotes) {
@@ -435,43 +452,43 @@ class noteModel {
         parentNote.subNotes.push(note);
 
       } else {
-        if(note._id.equals(new ObjectId("663b57f71427a57729cf85a2")))
+        if (note._id.equals(new ObjectId("663b57f71427a57729cf85a2")))
           console.log(note._id)
         if (note.referencedNoteId.equals(new ObjectId("000000000000000000000000"))) {
           console.log('ROOT', note)
           rootNotes.push(note);
         }
         const second = notesMap[note.referencedNoteId];
-        if(second && second.referencedNoteId.equals(new ObjectId("000000000000000000000000"))){
+        if (second && second.referencedNoteId.equals(new ObjectId("000000000000000000000000"))) {
           console.log('ROOT', note)
           rootNotes.push(note);
         } else if (second && !second.referencedNoteId.equals(new ObjectId("000000000000000000000000"))) {
           console.log('Busqueda de ancestros:', note, second)
           const ancestor = findAncestor(note.referencedNoteId);
-          if(ancestor !== null){
+          if (ancestor !== null) {
             console.log(ancestor.referencedNoteId.equals(new ObjectId("000000000000000000000000")))
             console.log(ancestor)
-            if(!ancestor.referencedNoteId.equals(new ObjectId("000000000000000000000000"))){
+            if (!ancestor.referencedNoteId.equals(new ObjectId("000000000000000000000000"))) {
               console.log(note)
-              if(ancestor.subNotes === undefined){
+              if (ancestor.subNotes === undefined) {
                 console.log('entra')
                 ancestor.subNotes = [];
                 ancestor.subNotes.push(note);
               }
-              else{
+              else {
                 ancestor.subNotes.push(note);
               }
               console.log(ancestor)
-            }else{
-              if(ancestor.access_mode){
-                if(ancestor.subNotes === undefined){
+            } else {
+              if (ancestor.access_mode) {
+                if (ancestor.subNotes === undefined) {
                   ancestor.subNotes = [];
                   ancestor.subNotes.push(note);
                 }
-                else{
+                else {
                   ancestor.subNotes.push(note);
                 }
-              }else{
+              } else {
                 rootNotes.push(note);
               }
             }
