@@ -46,7 +46,6 @@ class userModel {
 
     async deleteUserById(userId) {
         const db = await database.connectToServer();
-        
         const notes = await db.collection("Notes").find({ user_id: userId }).toArray();
         console.log('Notes', notes);
     
